@@ -1,0 +1,768 @@
+//Edit by H7.
+//if the optionVar does'nt exist, create it.
+if( !`optionVar -exists "timeSliderLength"` )
+{
+    optionVar -intValue "timeSliderLength" 600;
+}
+
+global proc getOffsetAmount (string $textFieldName)
+{
+    string $value = (`textField -q -text $textFieldName`);
+    int $intVal = (int)$value;
+    keyframe -edit -relative -timeChange ($intVal);
+    
+}
+
+global proc getNegOffsetAmount (string $textFieldName)
+{
+    string $value = ("-" + `textField -q -text $textFieldName`);
+    int $intVal = (int)$value;
+    keyframe -edit -relative -timeChange ($intVal);
+    
+}
+
+global proc showNurbsCurvesTool()
+{  
+    //save Currently active panel in a String
+    string $currentPanel = `getPanel -withFocus`;
+    
+    //Toggles the visibility
+    if (`modelEditor -query -nurbsCurves $currentPanel` == true) 
+    {
+        modelEditor -e -nurbsCurves false `getPanel -withFocus`;
+    }
+    else
+    {
+        modelEditor -e -nurbsCurves true `getPanel -withFocus`;
+    }
+}
+/////////////////////////////////////////////////////////////////////////////
+
+global proc showPolygonsTool()
+{
+    
+    //save Currently active panel in a String
+    string $currentPanel = `getPanel -withFocus`;
+    
+    //Toggles the visibility
+    if (`modelEditor -query -pm $currentPanel` == true) 
+    {
+        modelEditor -e -pm false `getPanel -withFocus`;
+    }
+    else
+    {
+        modelEditor -e -pm true `getPanel -withFocus`;
+    }
+}
+//////////////////////////////////////////////////////////////////////////////
+
+global proc showJointTool()
+{
+    //save Currently active panel in a String
+    string $currentPanel = `getPanel -withFocus`;
+    
+    //Toggles the visibility
+    if (`modelEditor -query -j $currentPanel` == true) 
+    {
+        modelEditor -e -j false `getPanel -withFocus`;
+    }
+    else
+    {
+        modelEditor -e -j true `getPanel -withFocus`;
+    }
+}
+
+global proc motionTrailTool()
+{
+    // MOTION TRAILS TOOL
+    // By Maxim Ouellet
+    
+    
+    $currentSelection = `ls -sl -l`;
+    
+    $motionTrailList = `ls "*motionTrail*"`;
+    
+    if ( size($motionTrailList) != 0 ){
+        select "*motionTrail*";
+        delete;
+    }
+    else { 
+        select $currentSelection;
+        doMotionTrail 2 { "snapshot  -motionTrail 1  -increment 1 -startTime `playbackOptions -query -min` -endTime `playbackOptions -query -max`", "1","0","0","1","1","1"};
+    };
+}
+
+
+//Stagger Animation by Brian Horgan
+//http://www.graphite9.com/
+global proc bh_staggerProc (string $textFieldName)
+{
+	
+	string $sel[] = `ls -sl`;
+    int $selCount = size($sel);
+    
+    select -cl;
+    
+    for ($rc = 0; $rc < $selCount; $rc++) 
+    {
+	
+	select -r $sel[$rc];
+    string $value = (`textField -q -text $textFieldName`);
+    int $intVal = (int)$value;
+    int $staggerVal = ($intVal*$rc);
+    
+    keyframe -e -iub true -r -o over -tc ($staggerVal)  ; // nudge forward
+	}
+	select -r $sel;
+} //Stagger by Brian Horgan
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc graphEditorViz ()
+{
+    int $TSLength = `optionVar -q "timeSliderLength"`;
+    if ( `window -exists graphEditorPlusWindow` )
+    {
+       deleteUI graphEditorPlusWindow;
+    }
+    
+    else
+    {            
+        window -title "Graph Editor Plus by Maxim Ouellet" "graphEditorPlusWindow";
+          string $form = `formLayout`;
+        
+        // Add a paneLayout to hold the Graph Editor
+        string $pane = `paneLayout -configuration "single"`;
+
+          setParent ..;
+          
+            // Add additional controls to the window
+            string $row = `rowLayout -numberOfColumns 17`;
+            global string $toggleButton[];
+
+              $toggleButton[0] = `button -command "curveSelection(\"translateX\", 0)" -backgroundColor 0.6 0 0 -label "tX"`;   
+              $toggleButton[1] = `button -command "curveSelection(\"translateY\", 1)" -backgroundColor 0 0.6 0 -label "tY"`;
+              $toggleButton[2] = `button -command "curveSelection(\"translateZ\", 2)" -backgroundColor 0 0.254902 0.6 -label "tZ"`;
+              $toggleButton[3] = `button -command "curveSelection(\"rotateX\", 3)" -backgroundColor 0.6 0 0 -label "rX"`;
+              $toggleButton[4] = `button -command "curveSelection(\"rotateY\", 4)" -backgroundColor 0 0.6 0 -label "rY"`;          
+              $toggleButton[5] = `button -command "curveSelection(\"rotateZ\", 5)" -backgroundColor 0 0.254902 0.6 -label "rZ"`;
+              $toggleButton[6] = `button -command "curveSelection(\"scaleX\", 6)" -backgroundColor 0.6 0 0 -label "sX"`;
+              $toggleButton[7] = `button -command "curveSelection(\"scaleY\", 7)" -backgroundColor 0 0.6 0 -label "sY"`; 
+              $toggleButton[8] = `button -command "curveSelection(\"scaleZ\", 8)" -backgroundColor 0 0.254902 0.6 -label "sZ"`;                   
+              button -command "clearFilters" -backgroundColor 1 1 1 -label "CLEAR";
+              text -label " - ------------ - " -vis false -w 30;
+              string $offsetAmountField = `textField -text "1" -w 30`;
+              string $object = `button -command ("getOffsetAmount(\"" + $offsetAmountField + "\");") -backgroundColor 0.188235 0.403922 0.631373 -label "Move" -w 68`;
+              text -label " - ------------ - " -vis false -w 30;
+              symbolButton -image "timerew.xpm"  -c "playButtonStart";
+              symbolButton -image "timeplay.xpm" -c "playButtonForward";
+              timePort -bgc 0.4 0.4 0.4 -w $TSLength -h 28;
+              setParent ..;
+        
+            setParent ..;
+        
+          formLayout -e
+            -af   $row          "left"    2
+            -af   $row          "right"   2
+            -af   $row          "bottom"  2
+            -af   $pane         "top"     2
+            -af   $pane         "left"    2
+            -af   $pane         "right"   2
+            -ac   $pane         "bottom"  4   $row
+              $form;
+
+    // Find the Grapheditor panel
+    string $GraphEditors[] = `getPanel -scriptType graphEditor`;
+    
+    if ( size( $GraphEditors ) )
+    {
+      // Unparent the scriptedPanel from where it is currently docked
+      scriptedPanel -e -unParent $GraphEditors[0];
+      // Fill the 'hole' left in the UI from removing the GraphEditor
+      fillEmptyPanes;
+    }
+    else
+    // A GraphEditor panel was not found -- create an unParented panel
+    {
+      global int $gUseMenusInPanels;
+      scriptedPanel -mbv $gUseMenusInPanels -type graphEditor
+                    -unParent -l "Graph Editor" graphEditor;
+    }
+    
+    // Now dock the Render View into our own layout.
+    scriptedPanel -e -parent $pane $GraphEditors[0];
+        
+        setFocus $pane;
+        
+        showWindow;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc timeSliderSetLengthProc (string $wantedLength)
+{
+    string $value = (`textField -q -text $wantedLength`);
+    int $lengthInt = (int)$value;
+    optionVar -iv "timeSliderLength" $lengthInt;
+}
+
+//START MainWindow creation
+global proc animationToolUI()
+{
+if ( `window -exists mainWindow` )
+{
+   deleteUI mainWindow;
+}
+
+
+string $window = `window  -title "AnimTool_2.2" 
+                                 -tlb 1
+                                 -s 1
+                                 "mainWindow"`;
+string $form = `formLayout -numberOfDivisions 100`;
+string $object;
+
+// Creating Element frameOffset
+string $offsetAmountField = `textField -text "1" -w 34 -h 34`;
+formLayout -edit -attachForm $offsetAmountField "top" 27 -attachForm $offsetAmountField "left" 54 $form;
+//=========================================
+// Creating Element toRight
+$object = `button -command ("getOffsetAmount(\"" + $offsetAmountField + "\");") -backgroundColor 0.188235 0.403922 0.631373 -label "-->" -w 34 -h 34`;
+formLayout -edit -attachForm $object "top" 27 -attachForm $object "left" 98 $form;
+//=========================================
+// Creating Element Text01
+$object = `text -label "offset keys by X frames." -w 122 -h 20`;
+formLayout -edit -attachForm $object "top" 7 -attachForm $object "left" 10 $form;
+//=========================================
+// Creating Element toLeft
+$object = `button -command ("getNegOffsetAmount(\"" + $offsetAmountField + "\");") -backgroundColor 0.6 0.14902 0 -label "<--" -w 34 -h 34`;
+formLayout -edit -attachForm $object "top" 27 -attachForm $object "left" 10 $form;
+//=========================================
+// Creating Element nurbViz
+$object = `button -command "showNurbsCurvesTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Curves" -w 39 -h 34`;
+formLayout -edit -attachForm $object "top" 117 -attachForm $object "left" 10 $form;
+//=========================================
+$object = `button -command "showPolygonsTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Mesh" -w 39 -h 34`;
+formLayout -edit -attachForm $object "top" 117 -attachForm $object "left" 52 $form;
+//=========================================
+$object = `button -command "showJointTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Joint" -w 39 -h 34`;
+formLayout -edit -attachForm $object "top" 117 -attachForm $object "left" 93 $form;
+//=========================================
+// Creating Element motionTrailViz
+$object = `button -command "motionTrailTool()" -backgroundColor 0.188235 0.631373 0.364706 -label "Motion Trail Tool" -w 122 -h 34`;
+formLayout -edit -attachForm $object "top" 160 -attachForm $object "left" 10 $form;
+//=========================================
+// Creating Element keyStag
+$object = `button -command ("bh_staggerProc(\"" + $offsetAmountField + "\");") -backgroundColor 0.541176 0.282353 0.2 -label "Stagger Keys" -w 122 -h 22`;
+formLayout -edit -attachForm $object "top" 68 -attachForm $object "left" 10 $form;
+//=========================================
+// Creating Element Separator 01
+$object = `separator -w 122 -h 11`;
+formLayout -edit -attachForm $object "top" 98 -attachForm $object "left" 7 $form;
+//=========================================
+// Creating Element GraphViz
+$object = `button -command "graphEditorViz ()" -backgroundColor 0.788235 0.631373 0.364706 -label "Graph Editor +" -w 122 -h 34`;
+formLayout -edit -attachForm $object "top" 203 -attachForm $object "left" 10 $form;
+//=========================================
+  
+$object = `separator -w 122 -h 8`;
+formLayout -edit -attachForm $object "top" 243 -attachForm $object "left" 7 $form;
+
+$object = `text -label "Auto Bind Joint" -w 122 -h 20`;
+formLayout -edit -attachForm $object "top" 243 -attachForm $object "left" 10 $form;
+
+$object = `checkBox -ann "Add end controls" -label "+End" -v 1 -h 18  EndCheckBox`;
+formLayout -edit -attachForm $object "top" 268 -attachForm $object "left" 10 $form;
+
+$object = `button -command "bindControlsAll" -backgroundColor 0.8 0.3 0.2 -label "Bind" -w 55 -h 30`;
+formLayout -edit -attachForm $object "top" 268 -attachForm $object "left" 70 $form;
+
+$object = `button -command "clearBind" -backgroundColor 0.8 0.3 0.2 -label "Bake" -w 55 -h 30`;
+formLayout -edit -attachForm $object "top" 303 -attachForm $object "left" 70 $form;
+
+$object = `button -command "selectPlus" -backgroundColor 0.3 0.3 0.3 -label "sel+" -w 55 -h 30`;
+formLayout -edit -attachForm $object "top" 303 -attachForm $object "left" 7 $form;
+
+//=========================================
+
+
+
+
+
+
+//====nameCommand Creation Process=========
+nameCommand -annotation "Set hotkey for Nurbs Curves" -command "showNurbsCurvesTool" showNurbsCurvesNamedCommand;
+nameCommand -annotation "Set hotkey for MotionTrail Tool" -command "motionTrailTool" motionTrailToolNamedCommand;
+nameCommand -annotation "Set hotkey Graph Editor Viz" -command "graphEditorViz" graphEditorVizNamedCommand;
+nameCommand -annotation "Set hotkey Graph Filter" -command "GraphFilter" graphFilterNamedCommand;
+nameCommand -annotation "Set hotkey Key Offsetter" -command "KeyOffsetterUI" KeyOffsetterNamedCommand;
+
+setParent..;
+showWindow( $window );
+window -edit -widthHeight 142.0 350.0 "mainWindow";
+}//END MainWindow Creation
+
+//add New Function "createEnd"./////////////////////////////////////////
+global proc selectHi()
+{
+    select -hi;
+    string $sel[]=`ls -sl`;
+    string $i;
+    string $nurbsCurves[];
+    int $count;
+    string $parentCurve[];
+    for($i in $sel)
+    {
+        if (`nodeType $i` == "nurbsCurve")
+        {
+        $parentCurve = `listRelatives -p -f $i`;
+        $nurbsCurves[$count] = $parentCurve[0];
+        $count++;}
+    }
+    select $nurbsCurves;
+}
+//////////////////////////////////////////////////////////////////////
+
+global proc selectPlus()
+{
+    string $sel[]=`ls -sl`;
+    string $sel_joint[];
+    string $joint[];
+    int $count;
+    string $curve_chindren[] = `listRelatives -c -f $sel[0]`;
+    if (`nodeType $curve_chindren[0]` == "nurbsCurve")
+    {
+       selectHi; 
+    }
+    else
+    {
+        select -hi;
+        $sel_joint = `ls -sl`;
+        for($i in $sel_joint)
+       {
+            if (`nodeType $i` == "joint")
+            {
+                $joint[$count] = $i;
+                $count++;
+            }
+       }
+       select $joint;
+    }
+}
+
+/////////////////////////////////////////////////////////////////////
+
+ //复制末端 
+global proc dupEnd()
+{ 
+     string $nurbsCurves[] = `ls -sl`;
+     int $a = `size $nurbsCurves`;
+     if ($a == 1)
+         {
+             print "请不要选择末端!!!";
+         }
+     else 
+        {
+        string $copy[] = `duplicate -n curves_moduan -rc $nurbsCurves[$a-1]`;
+        string $del[] = `listRelatives -c -f $copy[0]`;
+        string $d2;
+        for ($d2 in $del)
+            {
+                if(`nodeType $d2` != "nurbsCurve")
+                {
+                    select $d2;
+                    doDelete;
+                }
+            }//删除所有子级
+        parent -w $copy[0];
+        parent $copy[0] $nurbsCurves[$a-1];
+        
+ //计算距离   
+        
+            string $copycircle[] = `duplicate -rc $nurbsCurves[$a-2]`;
+            string $d[] = `listRelatives -c -f $copycircle[0]`;
+            //print $d[0];
+            string $d1;
+            for ($d1 in $d)
+            {
+                if(`nodeType $d1` != "nurbsCurve")
+                {
+                    select $d1;
+                    doDelete;
+                }
+            }//删除所有子级
+
+        string $loc1[] = `spaceLocator`;
+            parent $loc1[0] $copycircle[0];
+            ResetTransformations $loc1[0];
+            parent -w $loc1[0];
+            string $loc3[] = `spaceLocator`;
+            align -atl -x mid -y mid -z mid $loc3[0] $copycircle[0];
+            align -atl -x mid -y mid -z mid $loc1[0] $loc3[0];
+            
+        string $loc2[] = `spaceLocator`;
+            parent $loc2[0] $nurbsCurves[$a-1];
+            ResetTransformations $loc2[0];
+            parent -w $loc2[0];
+            string $loc4[] = `spaceLocator`;
+            align -atl -x mid -y mid -z mid $loc4[0] $nurbsCurves[$a-1];
+            align -atl -x mid -y mid -z mid $loc2[0] $loc4[0];
+            
+            parent $loc2[0] $loc1[0];
+            
+        vector $L = `getAttr ($loc2[0]+".translate")`;
+        //print $L;
+        delete $loc1[0];
+        delete $loc3[0];
+        delete $loc4[0];
+        delete $copycircle[0];
+//计算结束
+                           
+        select -r $copy[0];
+        if(abs($L.x) > abs($L.y) && abs($L.x) > abs($L.z))  {move -r -os -x ($L.x);}
+        if(abs($L.y) > abs($L.x) && abs($L.y) > abs($L.z))  {move -r -os -y ($L.y);}
+        if(abs($L.z) > abs($L.x) && abs($L.z) > abs($L.y))  {move -r -os -z ($L.z);}
+        channelBoxCommand -freezeTranslate;
+        //select -add $nurbsCurves;
+    }
+}
+
+//清理末端
+global proc CleanUpEnd()
+{
+    if(`objExists "curves_moduan*"`) 			{delete "curves_moduan*";}
+}
+
+
+global proc createEnd()
+{
+//多选
+string $numChoose[] = `ls -sl`;
+int $num = `size $numChoose`;
+//最终执行
+        int $choose;
+        string $selEnd[];
+        string $selEndAll[];
+        int $count = 0;
+        for ($choose = 0;$choose <= ($num-1);$choose++)
+        {
+              select $numChoose[$choose];
+              selectHi;
+              string $sel[] = `ls -sl`;
+              int $a = `size $sel`;
+              string $objectName = $sel[$a-1];
+              if (`match "curves_moduan" $objectName` == "curves_moduan")
+              {
+                  print ("已经存在末端"+"\n"); 
+                  select $sel[$a-1];
+              }
+              else
+              {
+                  dupEnd;
+                  string $selEnd[] = `ls -sl`;
+                  $selEndAll[$count] = $selEnd[0];
+                  $count++;
+                  select $selEndAll;
+              }
+         }
+
+    //select $numChoose;
+    //selectHi;
+}
+//END//////////////////////////////////////////////////////////////////
+
+//Auto Blind Joint/////////////////////////////////////////////////////
+global proc qParent(string $i)
+{
+    string $hi[] = `listRelatives -p -f $i`;
+    string $a = $hi[0];
+    select $a;
+
+}
+/////////////////////////////////////////////////////////////////////////////////
+
+
+global proc qDistance(string $start, string $end)
+{
+    vector $A = `xform -q -ws -rp $start`;
+    vector $B = `xform -q -ws -rp $end`;
+    float $L = mag($A - $B);
+
+}
+///////////////////////////////////////////////////////////////////////////////////
+global proc clear_houzhui(string $sel)
+{
+    string $cache[];
+    int $n = `tokenize $sel "_" $cache`;
+    int $c;
+    string $name1;
+    for($c=0;$c < ($n-1);$c++)
+    {
+        if($c == 0)
+        {
+            $name1 = $cache[0];
+        }
+        else
+        {
+            $name1 = $name1 + "_" + $cache[$c];
+        }
+}
+    //print $name1;
+    select $name1;
+}
+////////////////////////////////////////////////////////////////////////////////////
+
+
+global proc M(string $m)//选择_后缀匹配的对象
+{
+    string $i;
+    string $A[] = `ls -typ "joint"`;
+    int $c;
+    string $B[];
+    for($i in $A)
+    {
+
+       if( `match $m $i` == $m)
+        { 
+         $B[$c] = $i;
+         $c++;
+        }
+    }
+    select $B;
+}
+////////////////////////////////////////////////////////////////////////////////////
+
+
+global proc bindControls(string $A)
+{ 
+    select $A;
+    selectHi;
+    string $ctrls_chains[] = `ls -sl`;
+    string $i0;
+    string $cunzai;
+    int $cunzai_index;
+    for($i0 in $ctrls_chains)
+    {
+        if($cunzai_index == 0)
+        {
+            $cunzai = `objExists ($i0+"_kSpringProxySuffix")`;
+        }
+       else
+       {   
+           $cunzai = $cunzai+`objExists ($i0+"_kSpringProxySuffix")`;
+       }
+       $cunzai_index++;
+    }
+    if(`match "1" $cunzai` == 1)
+    {
+        print ("已 经 存 在 代 理 骨 骼！");
+        select -d;
+    }
+    else
+    {
+        select -d;
+        string $i;
+        int $c = 0;
+        string $proxyJoint[];
+        vector $L0 = `xform -q -ws -rp $ctrls_chains[0]`;
+        vector $L1 = `xform -q -ws -rp $ctrls_chains[1]`;
+        float $L = mag($L0 - $L1);
+        for ($i in $ctrls_chains)//create proxy joint in ctrl world position
+        {
+           vector $ctrl_position = `xform -q -ws -rp $i`;
+           //print $ctrl_position;
+
+           $proxyJoint[$c] = `joint -name ($i + "_kSpringProxySuffix")  -p ($ctrl_position.x) ($ctrl_position.y) ($ctrl_position.z) -radius ($L/4) -roo xyz`;
+           $c++;
+        }
+    
+        string $a;
+        for ($a in $proxyJoint)
+        {
+            // set joint orientation
+            joint -edit -orientJoint "xyz" -zeroScaleOrient $a;
+
+            // Straight bones alignment
+            setAttr ($a+".rx") 0; setAttr ($a+".ry") 0; setAttr ($a+".rz") 0;
+            setAttr ($a+".rotateAxis") 0 0 0;
+            setAttr ($a+".jointOrient") 0 0 0;
+        }
+
+           // parent root proxy joint to control parent
+           string $hi[] = `listRelatives -p -f $ctrls_chains[0]`;
+
+           parent $proxyJoint[0] $hi[0];
+
+            // Necessary to start a new joint chain
+            select -clear;
+        
+            int $idx;
+            for ($a in $proxyJoint)
+            {
+                // orient joint chain
+                if($idx < (`size $proxyJoint`-1))
+                {
+                    string $cns[] = `aimConstraint -aimVector 1 0 0 -upVector 0 0 0 -worldUpVector 0 1 0 -skip "x" $ctrls_chains[$idx+1] $proxyJoint[$idx]`;       
+                    delete $cns;
+                    parentConstraint -maintainOffset $proxyJoint[$idx] $ctrls_chains[$idx];
+                    $idx++;
+                }
+            }
+        }
+        //select $proxyJoint;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc bindControlsAll()
+{
+    string $sel[] = `ls -sl`;
+    if(`checkBox -q -v EndCheckBox` == 1)
+    {
+        createEnd;
+        select $sel;
+    }
+
+    string $all_ctrls_descendants_list[] = `listRelatives -ad $sel`;
+    string $x;
+    for($x in $sel)
+    {
+        int $a;
+        for($a=0;$a < `size $all_ctrls_descendants_list`; $a++)
+        {
+            if($all_ctrls_descendants_list[$a] == $x)
+            {
+                select -d $x;
+            } 
+        }
+     
+    }
+    string $sel2[] = `ls -sl`;
+    for($x in $sel2)
+    {
+        bindControls($x);
+    }
+    
+}   
+//bindControlsAll; 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc clearBind()
+{
+    string $T[] = `ls -sl`;
+    string $proxyJointLst[];
+    string $proxyJointLst00[];
+    if(`size $T` > 0)
+    {
+        string $i;
+        int $count;
+        for($i in $T)
+        {
+            if(`nodeType $i` == "joint")
+            {
+                 if (`match "_kSpringProxySuffix" $i` == "_kSpringProxySuffix")
+                {
+                    $proxyJointLst00[$count] = $i;
+                    $count++;
+                }
+            }
+        }
+        select $proxyJointLst00;
+        select -hi;
+        $proxyJointLst = `ls -sl`;
+    }
+
+    else
+    {
+        M("_kSpringProxySuffix");
+        $proxyJointLst = `ls -sl`;
+        //print $proxyJointLst;
+    }
+    if(`size $proxyJointLst` == 0)
+    {
+        print("请选择代理骨骼");
+    }
+    else
+    {
+        select -d;
+        string $ctrlList[];
+        string $bone;
+        int $c;
+        int $startFrame = `playbackOptions -q -min`;
+        int $endFrame = `playbackOptions -q -max`;
+        for ($bone in $proxyJointLst)
+        {
+            clear_houzhui($bone);
+            string $temp[] = `ls -sl`;
+            $ctrlList[$c] = $temp[0];
+            $c++;
+        }
+        bakeResults -t ($startFrame+":"+$endFrame) $ctrlList;
+
+        delete $proxyJointLst;
+        CleanUpEnd;
+    }
+
+}
+//clearBind;
+//////////////////////////////////////////////END//////////////////////////////////////////////////////////
+
+
+
+// Graph Filter by Maxim Ouellet
+
+global int $toggleCounter[];
+global string $toggleButton[];
+
+global proc curveSelection (string $chosenAxis, int $toggleCheck)
+{
+    global int $toggleCounter[];
+    global string $toggleButton[];
+    
+    if( $toggleCounter[$toggleCheck] == 0 )
+    {
+        filterUISelectAttributesCheckbox $chosenAxis 1 graphEditor1OutlineEd;
+        $toggleCounter[$toggleCheck] = 1;
+        button -edit -bgc 1 1 1 $toggleButton[$toggleCheck];
+        
+        
+    }
+    else
+    {
+        filterUISelectAttributesCheckbox $chosenAxis 0 graphEditor1OutlineEd;
+        $toggleCounter[$toggleCheck] = 0;
+        if($toggleCheck == 0 || $toggleCheck == 3 || $toggleCheck == 6) {button -edit -bgc 0.6 0 0 $toggleButton[$toggleCheck];}
+        if($toggleCheck == 1 || $toggleCheck == 4 || $toggleCheck == 7) {button -edit -bgc 0 0.6 0 $toggleButton[$toggleCheck];}
+        if($toggleCheck == 2 || $toggleCheck == 5 || $toggleCheck == 8) {button -edit -bgc 0 0.254902 0.6 $toggleButton[$toggleCheck];}
+       
+    }
+}
+
+global proc clearFilters ()
+{
+    global int $toggleCounter[];
+    global string $toggleButton[];
+    filterUISelectAttributesCheckbox translateX 0 graphEditor1OutlineEd;
+    filterUISelectAttributesCheckbox translateY 0 graphEditor1OutlineEd;
+    filterUISelectAttributesCheckbox translateZ 0 graphEditor1OutlineEd;
+    filterUISelectAttributesCheckbox rotateX 0 graphEditor1OutlineEd;
+    filterUISelectAttributesCheckbox rotateY 0 graphEditor1OutlineEd;
+    filterUISelectAttributesCheckbox rotateZ 0 graphEditor1OutlineEd;
+    filterUISelectAttributesCheckbox scaleX 0 graphEditor1OutlineEd;
+    filterUISelectAttributesCheckbox scaleY 0 graphEditor1OutlineEd;
+    filterUISelectAttributesCheckbox scaleZ 0 graphEditor1OutlineEd;
+    clear $toggleCounter;
+    button -edit -bgc 0.6 0 0 $toggleButton[0];
+    button -edit -bgc 0 0.6 0 $toggleButton[1];
+    button -edit -bgc 0 0.254902 0.6 $toggleButton[2];
+    button -edit -bgc 0.6 0 0 $toggleButton[3];
+    button -edit -bgc 0 0.6 0 $toggleButton[4];
+    button -edit -bgc 0 0.254902 0.6 $toggleButton[5];
+    button -edit -bgc 0.6 0 0 $toggleButton[6];
+    button -edit -bgc 0 0.6 0 $toggleButton[7];
+    button -edit -bgc 0 0.254902 0.6 $toggleButton[8];
+    
+}
+///////////////////////////////////////////////////////////////////////////
+animationToolUI
