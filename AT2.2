@@ -23,6 +23,7 @@ global proc getNegOffsetAmount (string $textFieldName)
 
 global proc showNurbsCurvesTool()
 {  
+    global string $button_show[];
     //save Currently active panel in a String
     string $currentPanel = `getPanel -withFocus`;
     
@@ -30,17 +31,19 @@ global proc showNurbsCurvesTool()
     if (`modelEditor -query -nurbsCurves $currentPanel` == true) 
     {
         modelEditor -e -nurbsCurves false `getPanel -withFocus`;
+        button -edit -bgc 0.3 0.3 0.3 $button_show[0];
     }
     else
     {
         modelEditor -e -nurbsCurves true `getPanel -withFocus`;
+        button -edit -bgc 0.407843 0.631373 0.188235 $button_show[0];
     }
 }
 /////////////////////////////////////////////////////////////////////////////
 
 global proc showPolygonsTool()
 {
-    
+    global string $button_show[];
     //save Currently active panel in a String
     string $currentPanel = `getPanel -withFocus`;
     
@@ -48,16 +51,19 @@ global proc showPolygonsTool()
     if (`modelEditor -query -pm $currentPanel` == true) 
     {
         modelEditor -e -pm false `getPanel -withFocus`;
+         button -edit -bgc 0.3 0.3 0.3 $button_show[1];
     }
     else
     {
         modelEditor -e -pm true `getPanel -withFocus`;
+        button -edit -bgc 0.407843 0.631373 0.188235 $button_show[1];
     }
 }
 //////////////////////////////////////////////////////////////////////////////
 
 global proc showJointTool()
 {
+    global string $button_show[];
     //save Currently active panel in a String
     string $currentPanel = `getPanel -withFocus`;
     
@@ -65,10 +71,12 @@ global proc showJointTool()
     if (`modelEditor -query -j $currentPanel` == true) 
     {
         modelEditor -e -j false `getPanel -withFocus`;
+         button -edit -bgc 0.3 0.3 0.3 $button_show[2];
     }
     else
     {
         modelEditor -e -j true `getPanel -withFocus`;
+        button -edit -bgc 0.407843 0.631373 0.188235 $button_show[2];
     }
 }
 
@@ -206,10 +214,14 @@ global proc timeSliderSetLengthProc (string $wantedLength)
     int $lengthInt = (int)$value;
     optionVar -iv "timeSliderLength" $lengthInt;
 }
+//////////////////////////////////////////////////////////////
 
+
+global string $button_show[];
 //START MainWindow creation
 global proc animationToolUI()
 {
+    global string $button_show[];
 if ( `window -exists mainWindow` )
 {
    deleteUI mainWindow;
@@ -240,14 +252,14 @@ $object = `button -command ("getNegOffsetAmount(\"" + $offsetAmountField + "\");
 formLayout -edit -attachForm $object "top" 27 -attachForm $object "left" 10 $form;
 //=========================================
 // Creating Element nurbViz
-$object = `button -command "showNurbsCurvesTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Curves" -w 39 -h 34`;
-formLayout -edit -attachForm $object "top" 117 -attachForm $object "left" 10 $form;
+$button_show[0] = `button -command "showNurbsCurvesTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Curves" -w 39 -h 34`;
+formLayout -edit -attachForm $button_show[0] "top" 117 -attachForm $button_show[0] "left" 10 $form;
 //=========================================
-$object = `button -command "showPolygonsTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Mesh" -w 39 -h 34`;
-formLayout -edit -attachForm $object "top" 117 -attachForm $object "left" 52 $form;
+$button_show[1] = `button -command "showPolygonsTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Mesh" -w 39 -h 34`;
+formLayout -edit -attachForm $button_show[1] "top" 117 -attachForm $button_show[1] "left" 52 $form;
 //=========================================
-$object = `button -command "showJointTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Joint" -w 39 -h 34`;
-formLayout -edit -attachForm $object "top" 117 -attachForm $object "left" 93 $form;
+$button_show[2] = `button -command "showJointTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Joint" -w 39 -h 34`;
+formLayout -edit -attachForm $button_show[2] "top" 117 -attachForm $button_show[2] "left" 93 $form;
 //=========================================
 // Creating Element motionTrailViz
 $object = `button -command "motionTrailTool()" -backgroundColor 0.188235 0.631373 0.364706 -label "Motion Trail Tool" -w 122 -h 34`;
