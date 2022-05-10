@@ -285,7 +285,10 @@ $object = `text -label "Auto Bind Joint" -w 122 -h 20`;
 formLayout -edit -attachForm $object "top" 243 -attachForm $object "left" 10 $form;
 
 $object = `checkBox -ann "Add end controls" -label "+End" -v 1 -h 18  EndCheckBox`;
-formLayout -edit -attachForm $object "top" 268 -attachForm $object "left" 10 $form;
+formLayout -edit -attachForm $object "top" 266 -attachForm $object "left" 10 $form;
+
+$object = `checkBox -ann "Auto Bind Joint" -label "Auto" -v 1 -h 18  AutoBindCheckBox`;
+formLayout -edit -attachForm $object "top" 283 -attachForm $object "left" 10 $form;
 
 $object = `button -command "bindControlsAll" -backgroundColor 0.8 0.3 0.2 -label "Bind" -w 55 -h 30`;
 formLayout -edit -attachForm $object "top" 268 -attachForm $object "left" 70 $form;
@@ -445,7 +448,7 @@ global proc CleanUpEnd()
 {
     if(`objExists "curves_moduan*"`) 			{delete "curves_moduan*";}
 }
-
+//////////////////////////////////////////////////////////////////////////
 
 global proc createEnd()
 {
@@ -546,10 +549,10 @@ global proc M(string $m)//选择_后缀匹配的对象
 ////////////////////////////////////////////////////////////////////////////////////
 
 
-global proc bindControls(string $A)
+global proc bindControls(string $A[])
 { 
     select $A;
-    selectHi;
+    //selectHi;
     string $ctrls_chains[] = `ls -sl`;
     string $i0;
     string $cunzai;
@@ -568,7 +571,7 @@ global proc bindControls(string $A)
     }
     if(`match "1" $cunzai` == 1)
     {
-        print ("已 经 存 在 代 理 骨 骼！");
+        print ("已 经 存 在 代 理 骨 骼！"+"\n");
         select -d;
     }
     else
@@ -577,9 +580,21 @@ global proc bindControls(string $A)
         string $i;
         int $c = 0;
         string $proxyJoint[];
-        vector $L0 = `xform -q -ws -rp $ctrls_chains[0]`;
-        vector $L1 = `xform -q -ws -rp $ctrls_chains[1]`;
-        float $L = mag($L0 - $L1);
+        float $L;
+        if(`size $ctrls_chains` > 1 )
+        { 
+            vector $L0 = `xform -q -ws -rp $ctrls_chains[0]`;
+            vector $L1 = `xform -q -ws -rp $ctrls_chains[1]`;
+            $L = mag($L0 - $L1);
+            if ($L == 0)
+            {
+                $L = 4;
+            }
+        }
+        else
+        {
+            $L = 4;
+        }
         for ($i in $ctrls_chains)//create proxy joint in ctrl world position
         {
            vector $ctrl_position = `xform -q -ws -rp $i`;
@@ -603,8 +618,10 @@ global proc bindControls(string $A)
 
            // parent root proxy joint to control parent
            string $hi[] = `listRelatives -p -f $ctrls_chains[0]`;
-
-           parent $proxyJoint[0] $hi[0];
+           if(`size $hi` > 0)
+           {
+               parent $proxyJoint[0] $hi[0];
+           }
 
             // Necessary to start a new joint chain
             select -clear;
@@ -617,9 +634,15 @@ global proc bindControls(string $A)
                 {
                     string $cns[] = `aimConstraint -aimVector 1 0 0 -upVector 0 0 0 -worldUpVector 0 1 0 -skip "x" $ctrls_chains[$idx+1] $proxyJoint[$idx]`;       
                     delete $cns;
-                    parentConstraint -maintainOffset $proxyJoint[$idx] $ctrls_chains[$idx];
+                    //parentConstraint -maintainOffset $proxyJoint[$idx] $ctrls_chains[$idx];
                     $idx++;
                 }
+            }
+            int $idx1;
+            for ($a in $proxyJoint)
+            {
+                parentConstraint -maintainOffset $proxyJoint[$idx1] $ctrls_chains[$idx1];
+                $idx1++;
             }
         }
         //select $proxyJoint;
@@ -627,33 +650,163 @@ global proc bindControls(string $A)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+//多层级判断
+global proc mul_Hi_judge(string $judge)
+{
+        select $judge;
+        selectHi;
+        string $Hi[] = `ls -sl`;
+        string $i;
+        string $Hi_P[];
+        int $c;
+        for ($i in $Hi)
+        {
+            string $t[] = `listRelatives -ap -f $i`;
+            $t = `listRelatives -ap -f $t[0]`;
+            $Hi_P[$c] = $t[0];
+            $c++;
+        }
+        string $Same[];
+        int $c1;
+        int $c2;
+        int $c3;
+        int $c4[];
+        int $c0;
+        for($c0=0; $c0 < `size $Hi_P`; $c0++)
+        {
+            for($c2=$c1;$c2 < (`size $Hi`-1);$c2++)
+            {
+                if($Hi_P[$c0] == $Hi_P[$c2+1])//逐个对比父对象
+                {
+                    $Same[$c3] = $Hi[$c2+1];
+                    $c4[$c3] = ($c2+1);
+                    $c3++;
+                }
+            }
+            $c1++;
+         /*   int $i0;
+            for($i0 in $c4)
+            {
+                if($c0 == $i0)
+                {
+                    $c0++;
+                    $c1++;
+                }
+            }*/
+        }
+        //print $c4;
+       // print $Same;//获得有共同父对象的控制器
+        select $Same;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+//多层级解决
+global proc mul_Hi_solve(string $solve,string $Same[])
+{
+             select $solve;
+             selectHi;
+             string $X_A[] = `ls -sl`;
+             select $Same;  selectHi;
+             string $X_d[] = `ls -sl`;
+             select $X_A;  select -d $X_d;
+             string $X_link[] = `ls -sl`;//主链
+             
+            if(`checkBox -q -v EndCheckBox` == 1)
+           {
+              int $a = `size $X_link`;
+              string $objectName = $X_link[$a-1];
+              if (`match "curves_moduan" $objectName` == "curves_moduan")
+              {
+                  print ("已经存在末端"+"\n"); 
+              }
+              else
+              {
+                  dupEnd;
+                  string $X_moduan[] = `ls -sl`;
+                  $X_link[`size $X_link`] = $X_moduan[0];
+              }
+           }
+           select $X_link;
+           bindControls($X_link);//绑定主链
+           
+           string $Same_ch;
+           for ($Same_ch in $Same)
+           {
+                select $Same_ch;
+                if(`checkBox -q -v EndCheckBox` == 1)
+               {
+                   createEnd;
+               }
+            select $Same_ch;
+            selectHi;
+            string $X_link_same[] = `ls -sl`;
+            bindControls($X_link_same);//绑定支链
+            
+            //string $p[] = `listRelatives -p $Same_ch`;
+            //parent ($Same_ch+"_kSpringProxySuffix") $p[0];
+           }
+}
+//////////////////////////////////////////////////////////////////////////////////////
+
 global proc bindControlsAll()
 {
-    string $sel[] = `ls -sl`;
-    if(`checkBox -q -v EndCheckBox` == 1)
-    {
-        createEnd;
-        select $sel;
-    }
-
-    string $all_ctrls_descendants_list[] = `listRelatives -ad $sel`;
-    string $x;
-    for($x in $sel)
-    {
-        int $a;
-        for($a=0;$a < `size $all_ctrls_descendants_list`; $a++)
+     string $sel[] = `ls -sl`;
+     if(`checkBox -q -v AutoBindCheckBox` == 1)
+     {
+        if(`checkBox -q -v EndCheckBox` == 1)
         {
-            if($all_ctrls_descendants_list[$a] == $x)
-            {
-                select -d $x;
-            } 
+            createEnd;
+            select $sel;
         }
+
+        string $all_ctrls_descendants_list[] = `listRelatives -ad $sel`;
+        string $x;
+        for($x in $sel)
+        {
+            int $a;
+            for($a=0;$a < `size $all_ctrls_descendants_list`; $a++)
+            {
+                if($all_ctrls_descendants_list[$a] == $x)
+                {
+                    select -d $x;
+                } 
+            }
      
+        }
+        string $sel2[] = `ls -sl`;
+        for($x in $sel2)
+        {
+            mul_Hi_judge($x);//判断多层级
+            string $Same[] = `ls -sl`;
+            if(`size $Same` > 0)
+            {
+                string $Same_in;
+                for($Same_in in $Same)
+                {
+                    mul_Hi_judge($Same_in);//判断多层级in1
+                    string $Same1[] = `ls -sl`;
+                    if(`size $Same1` > 0)
+                    {
+                        mul_Hi_solve($Same_in,$Same1);//解决多层级in1
+                    }
+             
+                }
+                 mul_Hi_solve($x,$Same);//解决多层级     
+            }
+        
+            else 
+            {
+                select $x;
+                selectHi;
+                string $X_link[] = `ls -sl`;
+                bindControls($X_link);
+            }
+        }
     }
-    string $sel2[] = `ls -sl`;
-    for($x in $sel2)
+    else
     {
-        bindControls($x);
+        
+        bindControls($sel);
     }
     
 }   
