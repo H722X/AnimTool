@@ -231,7 +231,9 @@ if ( `window -exists mainWindow` )
 string $window = `window  -title "AnimTool_2.2" 
                                  -tlb 1
                                  -s 1
+                                 -menuBar true
                                  "mainWindow"`;
+paneLayout -configuration "horizontal2";
 string $form = `formLayout -numberOfDivisions 100`;
 string $object;
 
@@ -279,39 +281,43 @@ formLayout -edit -attachForm $object "top" 203 -attachForm $object "left" 10 $fo
 //=========================================
   
 $object = `separator -w 122 -h 8`;
-formLayout -edit -attachForm $object "top" 243 -attachForm $object "left" 7 $form;
+formLayout -edit -attachForm $object "top" 239 -attachForm $object "left" 7 $form;
 
-$object = `text -label "Auto Bind Joint" -w 122 -h 20`;
-formLayout -edit -attachForm $object "top" 243 -attachForm $object "left" 10 $form;
+//AutoBind===================================
+setParent ..;
+string $BindMenuBarLayout = `menuBarLayout`;
+string $form2 = `formLayout -numberOfDivisions 100`;
 
-$object = `checkBox -ann "Add end controls" -label "End+" -v 1 -h 18  EndCheckBox`;
-formLayout -edit -attachForm $object "top" 266 -attachForm $object "left" 10 $form;
+menu -label "AutoBindJoint" AutoBind;
+      menuItem -label "AutoBind"  -checkBox on AutoBindCheckBox;
+      menuItem -label "Auto end+" -checkBox on EndCheckBox;
 
-$object = `checkBox -ann "Auto Bind Joint" -label "Auto" -v 1 -h 18  AutoBindCheckBox`;
-formLayout -edit -attachForm $object "top" 283 -attachForm $object "left" 10 $form;
 
-$object = `button -command "bindControlsAll" -backgroundColor 0.8 0.3 0.2 -label "Bind" -w 55 -h 30`;
-formLayout -edit -attachForm $object "top" 268 -attachForm $object "left" 70 $form;
+//$object = `checkBox -ann "Auto add end controls when bind" -label "" -v 1 -h 18  EndCheckBox`;
+//formLayout -edit -attachForm $object "top" 303 -attachForm $object "left" 10 $form;
 
-$object = `button -command "clearBind" -backgroundColor 0.8 0.3 0.2 -label "Bake" -w 55 -h 30`;
-formLayout -edit -attachForm $object "top" 303 -attachForm $object "left" 70 $form;
+//$object = `checkBox -ann "Auto Bind Joint" -label "AutoBindJoint" -v 1 -h 18  AutoBindCheckBox`;
+//formLayout -edit -attachForm $object "top" 245 -attachForm $object "left" 10 $form;
 
-$object = `button -command "selectPlus" -backgroundColor 0.3 0.3 0.3 -label "sel+" -w 55 -h 30`;
-formLayout -edit -attachForm $object "top" 303 -attachForm $object "left" 7 $form;
+$object = `button  -p $form2 -command "createEnd" -backgroundColor 0.3 0.3 0.3 -label "End+" -w 39 -h 34`;
+formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 10 $form2;
+
+$object = `button -p $form2 -command "CleanUpEnd" -backgroundColor 0.3 0.3 0.3 -label "Clear" -w 39 -h 34`;
+formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 52 $form2;
+
+$object = `button -p $form2 -command "bindControlsAll" -backgroundColor 0.8 0.3 0.2 -label "Bind" -w 59 -h 30`;
+formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 10 $form2;
+
+$object = `button -p $form2 -command "clearBind" -backgroundColor 0.8 0.3 0.2 -label "Bake" -w 59 -h 30`;
+formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 72 $form2;
+
+$object = `button -p $form2 -command "selectPlus" -backgroundColor 0.3 0.3 0.3 -label "sel+" -w 39 -h 34`;
+                    popupMenu;
+                                menuItem  -label "Ctrl->Joint" -c "sel_COJ"; 
+                                menuItem  -label "Joint->Ctrl" -c "sel_JOC";
+formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 93 $form2;
 
 //=========================================
-
-
-
-
-
-
-//====nameCommand Creation Process=========
-nameCommand -annotation "Set hotkey for Nurbs Curves" -command "showNurbsCurvesTool" showNurbsCurvesNamedCommand;
-nameCommand -annotation "Set hotkey for MotionTrail Tool" -command "motionTrailTool" motionTrailToolNamedCommand;
-nameCommand -annotation "Set hotkey Graph Editor Viz" -command "graphEditorViz" graphEditorVizNamedCommand;
-nameCommand -annotation "Set hotkey Graph Filter" -command "GraphFilter" graphFilterNamedCommand;
-nameCommand -annotation "Set hotkey Key Offsetter" -command "KeyOffsetterUI" KeyOffsetterNamedCommand;
 
 setParent..;
 showWindow( $window );
@@ -345,6 +351,8 @@ global proc selectPlus()
     string $sel_joint[];
     string $joint[];
     int $count;
+    if(`size $sel` > 0 )
+    {
     string $curve_chindren[] = `listRelatives -c -f $sel[0]`;
     if (`nodeType $curve_chindren[0]` == "nurbsCurve")
     {
@@ -364,9 +372,51 @@ global proc selectPlus()
        }
        select $joint;
     }
+    }
 }
 
 /////////////////////////////////////////////////////////////////////
+
+global proc sel_COJ()
+{
+    string $sel[] = `ls -sl`;
+    string $i;
+    string $Joint_sel[];
+    int $c;
+    for($i in $sel)
+    {
+            if(`objExists ($i+"_kSpringProxySuffix")`)
+            {
+                $Joint_sel[$c] = ($i+"_kSpringProxySuffix");
+                $c++;
+            }
+    }
+    select $Joint_sel;
+}
+/////////////////////////////////////////////////////////////////////
+
+global proc sel_JOC()
+{
+    string $sel[] = `ls -sl`;
+    string $i;
+    string $Ctrl_sel[];
+    int $c;
+    for($i in $sel)
+    {
+        if(`nodeType $i` == "joint")
+        {
+            clear_houzhui($i);
+            string $t[] = `ls -sl`;
+            if(`objExists $t[0]`)
+            {
+                $Ctrl_sel[$c] = $t[0];
+                $c++;
+            }
+        }
+    }
+    select $Ctrl_sel;
+}
+/////////////////////////////////////////////////////////////////////////////
 
  //复制末端 
 global proc dupEnd()
@@ -375,7 +425,7 @@ global proc dupEnd()
      int $a = `size $nurbsCurves`;
      if ($a == 1)
          {
-             print "请不要选择末端!!!";
+             warning "请 不 要 选 择 末 端 !";
          }
      else 
         {
@@ -438,7 +488,7 @@ global proc dupEnd()
         if(abs($L.x) > abs($L.y) && abs($L.x) > abs($L.z))  {move -r -os -x ($L.x);}
         if(abs($L.y) > abs($L.x) && abs($L.y) > abs($L.z))  {move -r -os -y ($L.y);}
         if(abs($L.z) > abs($L.x) && abs($L.z) > abs($L.y))  {move -r -os -z ($L.z);}
-        channelBoxCommand -freezeTranslate;
+        //channelBoxCommand -freezeTranslate;
         //select -add $nurbsCurves;
     }
 }
@@ -450,6 +500,60 @@ global proc CleanUpEnd()
 }
 //////////////////////////////////////////////////////////////////////////
 
+global proc mul_Hi_solve_end(string $solve,string $Same[])
+{
+             select $solve;
+             selectHi;
+             string $X_A[] = `ls -sl`;
+             select $Same;  selectHi;
+             string $X_d[] = `ls -sl`;
+             select $X_A;  select -d $X_d;
+             string $X_link[] = `ls -sl`;//主链
+             
+              int $a = `size $X_link`;
+              string $objectName = $X_link[$a-1];
+              string $end_main[];
+              if (`match "curves_moduan" $objectName` != "curves_moduan")
+              {
+                  dupEnd;
+                  $end_main = `ls -sl`;
+              }
+           
+           string $Same_ch;
+           int $c;
+           int $c1;
+           string $end[];
+           string $objectName2[];
+           for ($Same_ch in $Same)
+           {
+                select $Same_ch;
+                selectHi;
+                string $Same_ch_link[] = `ls -sl`;
+                int $b = `size $Same_ch_link`;
+                $objectName2[$c1] = $Same_ch_link[$b-1];
+                if (`match "curves_moduan" $objectName2[$c1]` != "curves_moduan")
+                {
+                    dupEnd;
+                    string $temp_cache[] = `ls -sl`;
+                    $end[$c] = $temp_cache[0];
+                    $c++;
+                }
+                $c1++;
+           }
+           if((`size $end` == 0) && (`size $end_main` == 0))
+           {
+                warning ("已 经 存 在 末 端"+"\n");
+                select -r $objectName2;
+                select -add $objectName;
+           }
+           else
+           {
+               select -r $end;
+               select -add $end_main;
+           }
+}
+//////////////////////////////////////////////////////////////////////////////////////
+
 global proc createEnd()
 {
 //多选
@@ -460,25 +564,50 @@ int $num = `size $numChoose`;
         string $selEnd[];
         string $selEndAll[];
         int $count = 0;
+        string $selAll01[];
+        string $selAll02[];
         for ($choose = 0;$choose <= ($num-1);$choose++)
         {
-              select $numChoose[$choose];
-              selectHi;
-              string $sel[] = `ls -sl`;
-              int $a = `size $sel`;
-              string $objectName = $sel[$a-1];
-              if (`match "curves_moduan" $objectName` == "curves_moduan")
+              mul_Hi_judge($numChoose[$choose]);
+              string $ch_same_F[] = `ls -sl`;
+              if(`size $ch_same_F` > 0)
               {
-                  print ("已经存在末端"+"\n"); 
-                  select $sel[$a-1];
+                  string $t;
+                  for($t in $ch_same_F)
+                  {
+                      mul_Hi_judge($t);
+                      string $ch_same_F2[] = `ls -sl`;
+                       if(`size $ch_same_F2` > 0)
+                      {
+                          mul_Hi_solve_end($t,$ch_same_F2);
+                          $selAll01 = `ls -sl`; 
+                      }
+                  }
+                  mul_Hi_solve_end($numChoose[$choose],$ch_same_F);
+                  $selAll02 = `ls -sl`;
+                  select -r $selAll01;
+                  select -add $selAll02;
               }
               else
               {
-                  dupEnd;
-                  string $selEnd[] = `ls -sl`;
-                  $selEndAll[$count] = $selEnd[0];
-                  $count++;
-                  select $selEndAll;
+                  select $numChoose[$choose];
+                  selectHi;
+                  string $sel[] = `ls -sl`;
+                  int $a = `size $sel`;
+                  string $objectName = $sel[$a-1];
+                  if (`match "curves_moduan" $objectName` == "curves_moduan")
+                  {
+                      warning ("已 经 存 在 末 端"+"\n"); 
+                      select $sel[$a-1];
+                  }
+                  else
+                  {
+                      dupEnd;
+                      string $selEnd[] = `ls -sl`;
+                      $selEndAll[$count] = $selEnd[0];
+                      $count++;
+                      select $selEndAll;
+                  }
               }
          }
 
@@ -522,8 +651,9 @@ global proc clear_houzhui(string $sel)
         {
             $name1 = $name1 + "_" + $cache[$c];
         }
-}
+    }
     //print $name1;
+    //return;
     select $name1;
 }
 ////////////////////////////////////////////////////////////////////////////////////
@@ -571,7 +701,7 @@ global proc bindControls(string $A[])
     }
     if(`match "1" $cunzai` == 1)
     {
-        print ("已 经 存 在 代 理 骨 骼！"+"\n");
+        warning ("已 经 存 在 代 理 骨 骼！"+"\n");
         select -d;
     }
     else
@@ -662,9 +792,16 @@ global proc mul_Hi_judge(string $judge)
         for ($i in $Hi)
         {
             string $t[] = `listRelatives -ap -f $i`;
-            $t = `listRelatives -ap -f $t[0]`;
-            $Hi_P[$c] = $t[0];
-            $c++;
+            if(`size $t` == 0)
+            {
+                $t[0] = "no father";
+            }
+            else
+            {
+                $t = `listRelatives -ap -f $t[0]`;
+            }
+                $Hi_P[$c] = $t[0];
+                $c++;
         }
         string $Same[];
         int $c1;
@@ -711,15 +848,11 @@ global proc mul_Hi_solve(string $solve,string $Same[])
              select $X_A;  select -d $X_d;
              string $X_link[] = `ls -sl`;//主链
              
-            if(`checkBox -q -v EndCheckBox` == 1)
+            if(`menuItem -q -checkBox EndCheckBox` == 1)
            {
               int $a = `size $X_link`;
               string $objectName = $X_link[$a-1];
-              if (`match "curves_moduan" $objectName` == "curves_moduan")
-              {
-                  print ("已经存在末端"+"\n"); 
-              }
-              else
+              if (`match "curves_moduan" $objectName` != "curves_moduan")
               {
                   dupEnd;
                   string $X_moduan[] = `ls -sl`;
@@ -733,7 +866,7 @@ global proc mul_Hi_solve(string $solve,string $Same[])
            for ($Same_ch in $Same)
            {
                 select $Same_ch;
-                if(`checkBox -q -v EndCheckBox` == 1)
+                if(`menuItem -q -checkBox EndCheckBox` == 1)
                {
                    createEnd;
                }
@@ -751,9 +884,9 @@ global proc mul_Hi_solve(string $solve,string $Same[])
 global proc bindControlsAll()
 {
      string $sel[] = `ls -sl`;
-     if(`checkBox -q -v AutoBindCheckBox` == 1)
+     if(`menuItem -q -checkBox AutoBindCheckBox` == 1)
      {
-        if(`checkBox -q -v EndCheckBox` == 1)
+        if(`menuItem -q -checkBox EndCheckBox` == 1)
         {
             createEnd;
             select $sel;
@@ -845,8 +978,8 @@ global proc clearBind()
         //print $proxyJointLst;
     }
     if(`size $proxyJointLst` == 0)
-    {
-        print("请选择代理骨骼");
+    { 
+        warning("请 选 择 代 理 骨 骼" + "\n");
     }
     else
     {
