@@ -1,4 +1,4 @@
-//Edit by H7.
+ //Edit by H7.
 //if the optionVar does'nt exist, create it.
 if( !`optionVar -exists "timeSliderLength"` )
 {
@@ -164,7 +164,7 @@ global proc graphEditorViz ()
               text -label " - ------------ - " -vis false -w 30;
               symbolButton -image "timerew.xpm"  -c "playButtonStart";
               symbolButton -image "timeplay.xpm" -c "playButtonForward";
-              timePort -bgc 0.4 0.4 0.4 -w $TSLength -h 28;
+              timePort -bgc 0.4 0.4 0.4 -w 750 -h 28;
               setParent ..;
         
             setParent ..;
@@ -315,6 +315,7 @@ $object = `button -p $form2 -command "selectPlus" -backgroundColor 0.3 0.3 0.3 -
                     popupMenu;
                                 menuItem  -label "Ctrl->Joint" -c "sel_COJ"; 
                                 menuItem  -label "Joint->Ctrl" -c "sel_JOC";
+                                menuItem  -label "straight" -c "straight";
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 93 $form2;
 
 //=========================================
@@ -344,6 +345,45 @@ global proc selectHi()
     select $nurbsCurves;
 }
 //////////////////////////////////////////////////////////////////////
+
+global proc straight()
+{
+    
+    string $i[] = `ls -sl`;
+    string $i0;
+    for ($i0 in $i)
+    {
+        if (`nodeType $i0` != "joint")
+        {
+            select $i0;
+            selectHi();
+            select -d $i0;
+            string $Hi[] = `ls -sl`;
+            string $Hi0;
+            for ($Hi0 in $Hi)
+            {
+                string $con[] = `orientConstraint -offset 0 0 0 -weight 1 $i0 $Hi0`;
+                setKeyframe $Hi0;
+                delete $con;
+            }
+            select $i;
+         }
+         else
+         {
+             select $i0;
+             select -hi;
+             select -d $i0;
+             string $Hi_j[] = `ls -sl`;
+             string $Hi_j0;
+             for ($Hi_j0 in $Hi_j)
+             {
+                 ResetTransformations $Hi_j0;
+             }
+             select $i;
+         }
+    }
+}
+//////////////////////////////////////////////////////////////////////////////
 
 global proc selectPlus()
 {
@@ -716,6 +756,10 @@ global proc bindControls(string $A[])
             vector $L0 = `xform -q -ws -rp $ctrls_chains[0]`;
             vector $L1 = `xform -q -ws -rp $ctrls_chains[1]`;
             $L = mag($L0 - $L1);
+            if ($L > 20)
+            {
+                $L = 20;
+            }
             if ($L == 0)
             {
                 $L = 4;
@@ -723,7 +767,31 @@ global proc bindControls(string $A[])
         }
         else
         {
-            $L = 4;
+            string $dup[] = `duplicate -rc $ctrls_chains[0]`;
+            string $d[] = `listRelatives -c -f $dup[0]`;
+            string $d1;
+            for ($d1 in $d)
+            {
+                if(`nodeType $d1` != "nurbsCurve")
+                {
+                    select $d1;
+                    doDelete;
+                }
+            }//删除所有子级
+            CBunlockAttr ($dup[0]+".translateX"); CBunlockAttr ($dup[0]+".translateY"); CBunlockAttr ($dup[0]+".translateZ");
+            CBunlockAttr ($dup[0]+".rotateX"); CBunlockAttr ($dup[0]+".rotateY"); CBunlockAttr ($dup[0]+".rotateZ");
+            string $loc[] = `spaceLocator`;
+            string $con[] = `parentConstraint -weight 1 $dup[0] $loc[0]`;
+            delete $con;
+            string $con1[] = `parentConstraint -weight 1 $loc[0] $dup[0]`;
+            setAttr ($loc[0]+".rotate") 0 0 0;
+            float $Box[] = `xform -q -bb $dup[0]`;//得到边界框数值
+            delete $con1;
+            delete $dup[0];
+            delete $loc;
+            float $len = `mag(<<$Box[3],$Box[4],$Box[5]>> - <<$Box[0],$Box[1],$Box[2]>>)`;
+             $L = sqrt($len*$len/3)*4;
+           // $L = 4;
         }
         for ($i in $ctrls_chains)//create proxy joint in ctrl world position
         {
@@ -766,6 +834,14 @@ global proc bindControls(string $A[])
                     delete $cns;
                     //parentConstraint -maintainOffset $proxyJoint[$idx] $ctrls_chains[$idx];
                     $idx++;
+                }
+                else
+                {
+                    if ($idx == 0)
+                    {
+                        string $con[] = `parentConstraint $ctrls_chains[$idx] $a`;
+                        delete $con;
+                    }
                 }
             }
             int $idx1;
@@ -881,6 +957,21 @@ global proc mul_Hi_solve(string $solve,string $Same[])
 }
 //////////////////////////////////////////////////////////////////////////////////////
 
+global proc DG(string $x)
+{
+    mul_Hi_judge($x);//判断多层级
+    string $Same[] = `ls -sl`;
+    if(`size $Same` > 0)
+    {
+        string $Same_in;
+        for($Same_in in $Same)
+        {
+           DG($Same_in);     
+        }
+      mul_Hi_solve($x,$Same);//解决多层级  
+    }
+}   
+
 global proc bindControlsAll()
 {
      string $sel[] = `ls -sl`;
@@ -913,18 +1004,7 @@ global proc bindControlsAll()
             string $Same[] = `ls -sl`;
             if(`size $Same` > 0)
             {
-                string $Same_in;
-                for($Same_in in $Same)
-                {
-                    mul_Hi_judge($Same_in);//判断多层级in1
-                    string $Same1[] = `ls -sl`;
-                    if(`size $Same1` > 0)
-                    {
-                        mul_Hi_solve($Same_in,$Same1);//解决多层级in1
-                    }
-             
-                }
-                 mul_Hi_solve($x,$Same);//解决多层级     
+                DG($x);     
             }
         
             else 
@@ -977,6 +1057,7 @@ global proc clearBind()
         $proxyJointLst = `ls -sl`;
         //print $proxyJointLst;
     }
+    
     if(`size $proxyJointLst` == 0)
     { 
         warning("请 选 择 代 理 骨 骼" + "\n");
@@ -999,7 +1080,10 @@ global proc clearBind()
         bakeResults -t ($startFrame+":"+$endFrame) $ctrlList;
 
         delete $proxyJointLst;
-        CleanUpEnd;
+        if(`size $T` == 0)
+        {
+            CleanUpEnd;
+        }
     }
 
 }
