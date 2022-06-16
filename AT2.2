@@ -1,4 +1,4 @@
- //Edit by H7.
+  //Edit by H7.
 //if the optionVar does'nt exist, create it.
 if( !`optionVar -exists "timeSliderLength"` )
 {
@@ -299,7 +299,7 @@ menu -label "AutoBindJoint" AutoBind;
 //$object = `checkBox -ann "Auto Bind Joint" -label "AutoBindJoint" -v 1 -h 18  AutoBindCheckBox`;
 //formLayout -edit -attachForm $object "top" 245 -attachForm $object "left" 10 $form;
 
-$object = `button  -p $form2 -command "createEnd" -backgroundColor 0.3 0.3 0.3 -label "End+" -w 39 -h 34`;
+$object = `button  -p $form2 -command "createEnd(1)" -backgroundColor 0.3 0.3 0.3 -label "End+" -w 39 -h 34`;
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 10 $form2;
 
 $object = `button -p $form2 -command "CleanUpEnd" -backgroundColor 0.3 0.3 0.3 -label "Clear" -w 39 -h 34`;
@@ -391,14 +391,10 @@ global proc selectPlus()
     string $sel_joint[];
     string $joint[];
     int $count;
+    
     if(`size $sel` > 0 )
     {
-    string $curve_chindren[] = `listRelatives -c -f $sel[0]`;
-    if (`nodeType $curve_chindren[0]` == "nurbsCurve")
-    {
-       selectHi; 
-    }
-    else
+    if(`nodeType $sel[0]` == "joint")
     {
         select -hi;
         $sel_joint = `ls -sl`;
@@ -411,6 +407,10 @@ global proc selectPlus()
             }
        }
        select $joint;
+    }
+    else
+    {      
+         selectHi;
     }
     }
 }
@@ -484,52 +484,23 @@ global proc dupEnd()
         parent $copy[0] $nurbsCurves[$a-1];
         
  //计算距离   
-        
-            string $copycircle[] = `duplicate -rc $nurbsCurves[$a-2]`;
-            string $d[] = `listRelatives -c -f $copycircle[0]`;
-            //print $d[0];
-            string $d1;
-            for ($d1 in $d)
-            {
-                if(`nodeType $d1` != "nurbsCurve")
-                {
-                    select $d1;
-                    doDelete;
-                }
-            }//删除所有子级
-
         string $loc1[] = `spaceLocator`;
-            parent $loc1[0] $copycircle[0];
-            ResetTransformations $loc1[0];
-            parent -w $loc1[0];
-            string $loc3[] = `spaceLocator`;
-            align -atl -x mid -y mid -z mid $loc3[0] $copycircle[0];
-            align -atl -x mid -y mid -z mid $loc1[0] $loc3[0];
+        string $con1[] = `parentConstraint -weight 1 $nurbsCurves[$a-2] $loc1[0]`;
+        delete $con1;
             
         string $loc2[] = `spaceLocator`;
-            parent $loc2[0] $nurbsCurves[$a-1];
-            ResetTransformations $loc2[0];
-            parent -w $loc2[0];
-            string $loc4[] = `spaceLocator`;
-            align -atl -x mid -y mid -z mid $loc4[0] $nurbsCurves[$a-1];
-            align -atl -x mid -y mid -z mid $loc2[0] $loc4[0];
+        string $con2[] = `parentConstraint -weight 1 $nurbsCurves[$a-1] $loc2[0]`;
+        delete $con2;
             
-            parent $loc2[0] $loc1[0];
+        parent $loc2[0] $loc1[0];
             
         vector $L = `getAttr ($loc2[0]+".translate")`;
-        //print $L;
         delete $loc1[0];
-        delete $loc3[0];
-        delete $loc4[0];
-        delete $copycircle[0];
-//计算结束
-                           
+//计算结束              
         select -r $copy[0];
         if(abs($L.x) > abs($L.y) && abs($L.x) > abs($L.z))  {move -r -os -x ($L.x);}
         if(abs($L.y) > abs($L.x) && abs($L.y) > abs($L.z))  {move -r -os -y ($L.y);}
         if(abs($L.z) > abs($L.x) && abs($L.z) > abs($L.y))  {move -r -os -z ($L.z);}
-        //channelBoxCommand -freezeTranslate;
-        //select -add $nurbsCurves;
     }
 }
 
@@ -540,7 +511,7 @@ global proc CleanUpEnd()
 }
 //////////////////////////////////////////////////////////////////////////
 
-global proc mul_Hi_solve_end(string $solve,string $Same[])
+global proc mul_Hi_solve_end(string $solve,string $Same[],int $warn)
 {
              select $solve;
              selectHi;
@@ -582,7 +553,10 @@ global proc mul_Hi_solve_end(string $solve,string $Same[])
            }
            if((`size $end` == 0) && (`size $end_main` == 0))
            {
-                warning ("已 经 存 在 末 端"+"\n");
+                if($warn == 1)
+                {
+                   warning ("已 经 存 在 末 端"+"\n");  
+                }
                 select -r $objectName2;
                 select -add $objectName;
            }
@@ -594,7 +568,7 @@ global proc mul_Hi_solve_end(string $solve,string $Same[])
 }
 //////////////////////////////////////////////////////////////////////////////////////
 
-global proc createEnd()
+global proc createEnd(int $warn)
 {
 //多选
 string $numChoose[] = `ls -sl`;
@@ -619,11 +593,11 @@ int $num = `size $numChoose`;
                       string $ch_same_F2[] = `ls -sl`;
                        if(`size $ch_same_F2` > 0)
                       {
-                          mul_Hi_solve_end($t,$ch_same_F2);
+                          mul_Hi_solve_end($t,$ch_same_F2,$warn);
                           $selAll01 = `ls -sl`; 
                       }
                   }
-                  mul_Hi_solve_end($numChoose[$choose],$ch_same_F);
+                  mul_Hi_solve_end($numChoose[$choose],$ch_same_F,$warn);
                   $selAll02 = `ls -sl`;
                   select -r $selAll01;
                   select -add $selAll02;
@@ -637,7 +611,10 @@ int $num = `size $numChoose`;
                   string $objectName = $sel[$a-1];
                   if (`match "curves_moduan" $objectName` == "curves_moduan")
                   {
-                      warning ("已 经 存 在 末 端"+"\n"); 
+                      if($warn == 1)
+                      {
+                         warning ("已 经 存 在 末 端"+"\n");  
+                      }
                       select $sel[$a-1];
                   }
                   else
@@ -719,7 +696,7 @@ global proc M(string $m)//选择_后缀匹配的对象
 ////////////////////////////////////////////////////////////////////////////////////
 
 
-global proc bindControls(string $A[])
+global proc bindControls(string $A[],int $warn)
 { 
     select $A;
     //selectHi;
@@ -741,7 +718,10 @@ global proc bindControls(string $A[])
     }
     if(`match "1" $cunzai` == 1)
     {
-        warning ("已 经 存 在 代 理 骨 骼！"+"\n");
+        if($warn == 1)
+        {
+            warning ("已 经 存 在 代 理 骨 骼！"+"\n");  
+        }
         select -d;
     }
     else
@@ -756,10 +736,10 @@ global proc bindControls(string $A[])
             vector $L0 = `xform -q -ws -rp $ctrls_chains[0]`;
             vector $L1 = `xform -q -ws -rp $ctrls_chains[1]`;
             $L = mag($L0 - $L1);
-            if ($L > 20)
-            {
-                $L = 20;
-            }
+            //if ($L > 20)
+            //{
+            //    $L = 20;
+            //}
             if ($L == 0)
             {
                 $L = 4;
@@ -856,6 +836,49 @@ global proc bindControls(string $A[])
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////选择父级控制器///////////////////////////////////starting.........
+global proc curv()
+{
+    string $s[] = `ls -sl`;
+    string $t0[] = `listRelatives -c -f $s[0]`;
+    string $i;
+    string $p[];
+    int $b = 0;
+    for ($i in $t0)
+    {
+        if(`nodeType $i` == "nurbsCurve")
+        {
+            $p[0] = $s[0];
+            select $p[0];
+            $b = 1;
+            break;
+        }
+    }
+    if ($b == 0)
+    {
+        select -d;
+    }
+}
+//////////////////////
+global proc selectP()
+ {
+     string $s[] = `ls -sl`;
+     string $t0[] = `listRelatives -ap -f $s[0]`;
+     select $t0;
+     curv;
+     string $s2[] = `ls -sl`;
+     if(`size $s2` == 0)
+     {
+         select $t0[0];
+         allP;
+     }
+     else
+     {
+         select $s2;
+     }
+   
+}
+///////////////////////////////////选择父级控制器///////////////////////////////////Ending.................
 //多层级判断
 global proc mul_Hi_judge(string $judge)
 {
@@ -874,10 +897,12 @@ global proc mul_Hi_judge(string $judge)
             }
             else
             {
-                $t = `listRelatives -ap -f $t[0]`;
-            }
-                $Hi_P[$c] = $t[0];
+                select $i;
+                selectP;
+                string $sel[] = `ls -sl`; 
+                $Hi_P[$c] = $sel[0];
                 $c++;
+            }
         }
         string $Same[];
         int $c1;
@@ -936,7 +961,7 @@ global proc mul_Hi_solve(string $solve,string $Same[])
               }
            }
            select $X_link;
-           bindControls($X_link);//绑定主链
+           bindControls($X_link,0);//绑定主链
            
            string $Same_ch;
            for ($Same_ch in $Same)
@@ -944,12 +969,12 @@ global proc mul_Hi_solve(string $solve,string $Same[])
                 select $Same_ch;
                 if(`menuItem -q -checkBox EndCheckBox` == 1)
                {
-                   createEnd;
+                   createEnd(0);
                }
             select $Same_ch;
             selectHi;
             string $X_link_same[] = `ls -sl`;
-            bindControls($X_link_same);//绑定支链
+            bindControls($X_link_same,0);//绑定支链
             
             //string $p[] = `listRelatives -p $Same_ch`;
             //parent ($Same_ch+"_kSpringProxySuffix") $p[0];
@@ -979,7 +1004,7 @@ global proc bindControlsAll()
      {
         if(`menuItem -q -checkBox EndCheckBox` == 1)
         {
-            createEnd;
+            createEnd(0);
             select $sel;
         }
 
@@ -1012,14 +1037,14 @@ global proc bindControlsAll()
                 select $x;
                 selectHi;
                 string $X_link[] = `ls -sl`;
-                bindControls($X_link);
+                bindControls($X_link,1);
             }
         }
     }
     else
     {
         
-        bindControls($sel);
+        bindControls($sel,1);
     }
     
 }   
