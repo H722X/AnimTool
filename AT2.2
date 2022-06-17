@@ -1,4 +1,4 @@
-  //Edit by H7.
+   //Edit by H7.
 //if the optionVar does'nt exist, create it.
 if( !`optionVar -exists "timeSliderLength"` )
 {
@@ -291,6 +291,8 @@ string $form2 = `formLayout -numberOfDivisions 100`;
 menu -label "AutoBindJoint" AutoBind;
       menuItem -label "AutoBind"  -checkBox on AutoBindCheckBox;
       menuItem -label "Auto end+" -checkBox on EndCheckBox;
+      menuItem -label "AutoJointSize" -checkBox on JointSizeCheckBox;
+      menuItem -label "AutoSort" -checkBox off SortCheckBox;
 
 
 //$object = `checkBox -ann "Auto add end controls when bind" -label "" -v 1 -h 18  EndCheckBox`;
@@ -300,22 +302,30 @@ menu -label "AutoBindJoint" AutoBind;
 //formLayout -edit -attachForm $object "top" 245 -attachForm $object "left" 10 $form;
 
 $object = `button  -p $form2 -command "createEnd(1)" -backgroundColor 0.3 0.3 0.3 -label "End+" -w 39 -h 34`;
-formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 10 $form2;
+                    popupMenu;
+                                menuItem  -label "Clear" -c "CleanUpEnd";
+formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 93 $form2;
 
-$object = `button -p $form2 -command "CleanUpEnd" -backgroundColor 0.3 0.3 0.3 -label "Clear" -w 39 -h 34`;
-formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 52 $form2;
+//$object = `button -p $form2 -command "CleanUpEnd" -backgroundColor 0.3 0.3 0.3 -label "Clear" -w 39 -h 34`;
+//formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 52 $form2;
 
-$object = `button -p $form2 -command "bindControlsAll" -backgroundColor 0.8 0.3 0.2 -label "Bind" -w 59 -h 30`;
+$object = `button -p $form2 -command "bindControlsAll" -backgroundColor 0.3 0.3 0.3 -label "Bind" -w 39 -h 34`;
 formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 10 $form2;
 
-$object = `button -p $form2 -command "clearBind" -backgroundColor 0.8 0.3 0.2 -label "Bake" -w 59 -h 30`;
-formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 72 $form2;
+$object = `button -p $form2 -command "clearBind" -backgroundColor 0.3 0.3 0.3 -label "Bake" -w 39 -h 34`;
+formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 52 $form2;
 
 $object = `button -p $form2 -command "selectPlus" -backgroundColor 0.3 0.3 0.3 -label "sel+" -w 39 -h 34`;
                     popupMenu;
                                 menuItem  -label "Ctrl->Joint" -c "sel_COJ"; 
                                 menuItem  -label "Joint->Ctrl" -c "sel_JOC";
                                 menuItem  -label "straight" -c "straight";
+formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 52 $form2;
+
+$object = `button -p $form2 -command "sel_P" -backgroundColor 0.6 0.14902 0 -label "↑↑" -w 39 -h 34`;
+formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 10 $form2;
+
+$object = `button -p $form2 -command "sel_C" -backgroundColor 0.188235 0.403922 0.631373 -label "↓↓" -w 39 -h 34`;
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 93 $form2;
 
 //=========================================
@@ -325,7 +335,53 @@ showWindow( $window );
 window -edit -widthHeight 142.0 350.0 "mainWindow";
 }//END MainWindow Creation
 
-//add New Function "createEnd"./////////////////////////////////////////
+//////////////////////////////////////////排序starting...................
+global proc chEnd()
+{
+    string $sel[] = `ls -sl`;
+    select -hi $sel[0];
+    string $ch[] = `ls -sl`;
+    string $ch0;
+    int $c=0;
+    select -r $sel;
+    if(`size $sel` > 1)
+    {
+        for($ch0 in $ch)
+        {
+            if($ch0 == $sel[1])
+            {
+                select -d $sel[0];
+                $c = 1;
+                break;
+            }
+        }
+        if($c == 0)
+        {
+            select -d $sel[1];
+        }
+        chEnd;
+    }
+}
+///////////////////////
+global proc Sortt()
+{
+    string $sel[] = `ls -sl`;
+    int $c;
+    string $sor[];
+    string $del[];
+    for($c=0;$c<`size $sel`;$c++)
+    {
+        chEnd;
+        string $s[] = `ls -sl`;
+        $sor[(`size $sel`-$c-1)] = $s[0];
+        $del[$c] = $s[0];
+        select $sel;
+        select -d $del;
+    }
+    select $sor;
+}
+//////////////////////////////////////////排序Ending...................
+
 global proc selectHi()
 {
     select -hi;
@@ -343,6 +399,10 @@ global proc selectHi()
         $count++;}
     }
     select $nurbsCurves;
+    if(`menuItem -q -checkBox SortCheckBox` == 1)
+    {
+        Sortt;
+    }
 }
 //////////////////////////////////////////////////////////////////////
 
@@ -416,6 +476,111 @@ global proc selectPlus()
 }
 
 /////////////////////////////////////////////////////////////////////
+
+//////////选择父级starting......................................
+global proc sel_P()
+{
+    string $sel[] = `ls -sl`;
+    string $i;
+    int $c;
+    string $p[];
+    for($i in $sel)
+    {
+       select $i;
+       selectP;
+       string $temp[] = `ls -sl`;
+       $p[$c] = $temp[0];
+       $c++;
+    }
+    select $p;
+}
+//////////选择父级ending......................................
+
+//////////////////////////选择子集starting...........................................///////////////////////
+global proc curv()
+{
+    string $s[] = `ls -sl`;
+    string $t0[] = `listRelatives -c -f $s`;
+    string $i;
+    string $p[];
+    int $b = 0;
+    for ($i in $t0)
+    {
+        if(`nodeType $i` == "nurbsCurve")
+        {
+            $p[0] = $s[0];
+            select $p[0];
+            $b = 1;
+            break;
+        }
+    }
+    if ($b == 0)
+    {
+        select -d;
+    }
+}
+//////////////////////
+global proc selectC()
+ {
+     string $s[] = `ls -sl`;
+     string $t0[] = `listRelatives -c -f $s[0]`;
+     if(`nodeType $t0[0]` != "nurbsCurve")
+     {
+         select $t0[0];
+         curv;
+         string $s2[] = `ls -sl`;
+         if(`size $s2` == 0)
+         {
+             select $t0[0];
+             selectC;
+         }
+         else
+         {
+             select $s2;
+         }
+     }
+     else
+     {
+         select $s[0];
+     }
+}
+////////////////////////
+global proc sel_C()
+ {
+    string $s[] = `ls -sl`;
+    string $s0;
+    int $c1;
+    string $ch1[];
+    string $ch[];
+    for($s0 in $s)
+    {
+        string $t0[] = `listRelatives -c -f $s0`;
+        string $i;
+        int $c;
+         for($i in $t0)
+         {
+             if(`nodeType $i` != "nurbsCurve")
+             {
+                 select $i;
+                 selectC;
+                 string $temp[] = `ls -sl`;
+                 $ch[$c] = $temp[0];
+                 $c++;
+             }
+         }
+          select $ch;
+          string $ch0;
+          for($ch0 in $ch)
+          {
+              select $ch0;
+              string $temp1[] = `ls -sl`;
+              $ch1[$c1] = $temp1[0];
+              $c1++;
+          }
+          select $ch1;
+    }
+}
+//////////////////////////选择子集Ending...........................................///////////////////////
 
 global proc sel_COJ()
 {
@@ -736,10 +901,17 @@ global proc bindControls(string $A[],int $warn)
             vector $L0 = `xform -q -ws -rp $ctrls_chains[0]`;
             vector $L1 = `xform -q -ws -rp $ctrls_chains[1]`;
             $L = mag($L0 - $L1);
-            //if ($L > 20)
-            //{
-            //    $L = 20;
-            //}
+            if(`menuItem -q -checkBox JointSizeCheckBox` == 1)
+            {
+                if ($L > 20)
+                {
+                    $L = 20;
+                }
+            }
+            else
+            {
+                $L = $L*4;
+            }
             if ($L == 0)
             {
                 $L = 4;
@@ -870,7 +1042,7 @@ global proc selectP()
      if(`size $s2` == 0)
      {
          select $t0[0];
-         allP;
+         selectP;
      }
      else
      {
