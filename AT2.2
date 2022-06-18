@@ -1,4 +1,4 @@
-   //Edit by H7.
+    //Edit by H7.
 //if the optionVar does'nt exist, create it.
 if( !`optionVar -exists "timeSliderLength"` )
 {
@@ -110,17 +110,32 @@ global proc bh_staggerProc (string $textFieldName)
     int $selCount = size($sel);
     
     select -cl;
+    int $timeStart = `playbackOptions -q -min`; 
+    int $timeEnd = `playbackOptions -q -max`;
     
     for ($rc = 0; $rc < $selCount; $rc++) 
     {
 	
-	select -r $sel[$rc];
-    string $value = (`textField -q -text $textFieldName`);
-    int $intVal = (int)$value;
-    int $staggerVal = ($intVal*$rc);
+	    select -r $sel[$rc];
+        string $value = (`textField -q -text $textFieldName`);
+        int $intVal = (int)$value;
+        int $staggerVal = ($intVal*$rc);
     
-    keyframe -e -iub true -r -o over -tc ($staggerVal)  ; // nudge forward
+        keyframe -e -iub true -r -o over -tc ($staggerVal)  ; // nudge forward
+        
+        if(`checkBox -q -v StaggerLoop` == 1)
+        {
+            setInfinity -pri cycle;
+            setInfinity -poi cycle;
+            bakeResults -simulation true -t ($timeStart+":"+$timeEnd) -smart 1;
+            selectKey -t (":"+($timeStart-1)) $sel[$rc];
+            selectKey -add -t (($timeEnd+1)+":") $sel[$rc];
+            selectKey -clear;
+            setInfinity -pri constant;
+            setInfinity -poi constant;
+        }
 	}
+	
 	select -r $sel;
 } //Stagger by Brian Horgan
 
@@ -267,9 +282,11 @@ formLayout -edit -attachForm $button_show[2] "top" 117 -attachForm $button_show[
 $object = `button -command "motionTrailTool()" -backgroundColor 0.188235 0.631373 0.364706 -label "Motion Trail Tool" -w 122 -h 34`;
 formLayout -edit -attachForm $object "top" 160 -attachForm $object "left" 10 $form;
 //=========================================
+$object = `checkBox -v 0 -label "L" -sbm "Loop" "StaggerLoop"`;
+formLayout -edit -attachForm $object "top" 72 -attachForm $object "left" 10 $form;
 // Creating Element keyStag
-$object = `button -command ("bh_staggerProc(\"" + $offsetAmountField + "\");") -backgroundColor 0.541176 0.282353 0.2 -label "Stagger Keys" -w 122 -h 22`;
-formLayout -edit -attachForm $object "top" 68 -attachForm $object "left" 10 $form;
+$object = `button -command ("bh_staggerProc(\"" + $offsetAmountField + "\");") -backgroundColor 0.541176 0.282353 0.2 -label "Stagger Keys" -w 85 -h 22`;
+formLayout -edit -attachForm $object "top" 68 -attachForm $object "left" 45 $form;
 //=========================================
 // Creating Element Separator 01
 $object = `separator -w 122 -h 11`;
@@ -930,6 +947,7 @@ global proc bindControls(string $A[],int $warn)
                     doDelete;
                 }
             }//删除所有子级
+            channelBoxCommand CBunlockAttr;
             CBunlockAttr ($dup[0]+".translateX"); CBunlockAttr ($dup[0]+".translateY"); CBunlockAttr ($dup[0]+".translateZ");
             CBunlockAttr ($dup[0]+".rotateX"); CBunlockAttr ($dup[0]+".rotateY"); CBunlockAttr ($dup[0]+".rotateZ");
             string $loc[] = `spaceLocator`;
@@ -1012,23 +1030,26 @@ global proc bindControls(string $A[],int $warn)
 global proc curv()
 {
     string $s[] = `ls -sl`;
-    string $t0[] = `listRelatives -c -f $s[0]`;
-    string $i;
-    string $p[];
-    int $b = 0;
-    for ($i in $t0)
+    if(`size $s` > 0)
     {
-        if(`nodeType $i` == "nurbsCurve")
+        string $t0[] = `listRelatives -c -f $s[0]`;
+        string $i;
+        string $p[];
+        int $b = 0;
+        for ($i in $t0)
         {
-            $p[0] = $s[0];
-            select $p[0];
-            $b = 1;
-            break;
+            if(`nodeType $i` == "nurbsCurve")
+            {
+                $p[0] = $s[0];
+                select $p[0];
+                $b = 1;
+                break;
+            }
         }
-    }
-    if ($b == 0)
-    {
-        select -d;
+        if ($b == 0)
+        {
+            select -d;
+        }
     }
 }
 //////////////////////
@@ -1041,8 +1062,11 @@ global proc selectP()
      string $s2[] = `ls -sl`;
      if(`size $s2` == 0)
      {
-         select $t0[0];
-         selectP;
+         if($t0[0] != "")
+         {
+             select $t0[0];
+             selectP;
+         }
      }
      else
      {
