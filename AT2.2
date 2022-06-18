@@ -1,4 +1,4 @@
-    //Edit by H7.
+     //Edit by H7.
 //if the optionVar does'nt exist, create it.
 if( !`optionVar -exists "timeSliderLength"` )
 {
@@ -541,24 +541,31 @@ global proc selectC()
  {
      string $s[] = `ls -sl`;
      string $t0[] = `listRelatives -c -f $s[0]`;
-     if(`nodeType $t0[0]` != "nurbsCurve")
+     if(`size $t0` > 0)
      {
-         select $t0[0];
-         curv;
-         string $s2[] = `ls -sl`;
-         if(`size $s2` == 0)
+         if(`nodeType $t0[0]` != "nurbsCurve")
          {
              select $t0[0];
-             selectC;
+             curv;
+             string $s2[] = `ls -sl`;
+             if(`size $s2` == 0)
+             {
+                 select $t0[0];
+                 selectC;
+             }
+             else
+             {
+                 select $s2;
+             }
          }
          else
          {
-             select $s2;
+             select $s[0];
          }
      }
      else
      {
-         select $s[0];
+         select -d;
      }
 }
 ////////////////////////
@@ -581,8 +588,11 @@ global proc sel_C()
                  select $i;
                  selectC;
                  string $temp[] = `ls -sl`;
-                 $ch[$c] = $temp[0];
-                 $c++;
+                 if(`size $temp` > 0)
+                 {   
+                     $ch[$c] = $temp[0];
+                     $c++;
+                 }
              }
          }
           select $ch;
