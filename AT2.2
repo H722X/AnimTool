@@ -1,4 +1,4 @@
-     //Edit by H7.
+      //Edit by H7.
 //if the optionVar does'nt exist, create it.
 if( !`optionVar -exists "timeSliderLength"` )
 {
@@ -506,8 +506,11 @@ global proc sel_P()
        select $i;
        selectP;
        string $temp[] = `ls -sl`;
-       $p[$c] = $temp[0];
-       $c++;
+       if(`size $temp` > 0)
+       {
+           $p[$c] = $temp[0];
+           $c++;
+       }
     }
     select $p;
 }
