@@ -313,7 +313,7 @@ menu -label "AutoBindJoint" AutoBind;
       menuItem -label "AutoBind"  -checkBox on AutoBindCheckBox;
       menuItem -label "Auto end+" -checkBox on EndCheckBox;
       menuItem -label "AutoJointSize" -checkBox on JointSizeCheckBox;
-      menuItem -label "AutoSort" -checkBox off SortCheckBox;
+      //menuItem -label "AutoSort" -checkBox off SortCheckBox;
 
 
 //$object = `checkBox -ann "Auto add end controls when bind" -label "" -v 1 -h 18  EndCheckBox`;
@@ -413,17 +413,24 @@ global proc selectHi()
     string $parentCurve[];
     for($i in $sel)
     {
-        if (`nodeType $i` == "nurbsCurve")
+        string $i_c[] = `listRelatives -c -f $i`;
+        string $i_c0;
+        for($i_c0 in $i_c)
         {
-        $parentCurve = `listRelatives -p -f $i`;
-        $nurbsCurves[$count] = $parentCurve[0];
-        $count++;}
+            if (`nodeType $i_c0` == "nurbsCurve")
+            {
+                $parentCurve = `listRelatives -p -f $i_c0`;
+                $nurbsCurves[$count] = $parentCurve[0];
+                $count++;
+                break;
+            }
+        }
     }
     select $nurbsCurves;
-    if(`menuItem -q -checkBox SortCheckBox` == 1)
-    {
-        Sortt;
-    }
+    //if(`menuItem -q -checkBox SortCheckBox` == 1)
+    //{
+    //    Sortt;
+    //}
 }
 //////////////////////////////////////////////////////////////////////
 
