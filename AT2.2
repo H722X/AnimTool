@@ -132,7 +132,8 @@ global proc bh_staggerProc (string $textFieldName)
             bakeResults -simulation true -t ($timeStart+":"+$timeEnd) -smart 1;
             selectKey -t (":"+($timeStart-1)) $sel[$rc];
             selectKey -add -t (($timeEnd+1)+":") $sel[$rc];
-            selectKey -clear;
+            cutKey -animation keys -clear;
+            //selectKey -clear;
         }
 	}
 	select -r $sel;
