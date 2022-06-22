@@ -347,7 +347,7 @@ formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 52 $for
 $object = `button -p $form2 -command "sel_P" -backgroundColor 0.6 0.14902 0 -label "↑↑" -w 39 -h 34`;
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 10 $form2;
 
-$object = `button -p $form2 -command "sel_C" -backgroundColor 0.188235 0.403922 0.631373 -label "↓↓" -w 39 -h 34`;
+$object = `button -p $form2 -command "sel_C(0)" -backgroundColor 0.188235 0.403922 0.631373 -label "↓↓" -w 39 -h 34`;
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 93 $form2;
 
 //=========================================
@@ -560,8 +560,52 @@ global proc selectC()
      {
          if(`size $t0` > 1)
          {     
-             select $t0;
-             sel_C;
+             select $s[0];
+             curv;
+             string $temp[] = `ls -sl`;
+             if(`size $temp` > 0)
+             {
+                 select $s[0];//多子级检测自己是曲线
+             }
+             else
+             {
+                 string $t00;
+                 string $cur[];
+                 string $others[];
+                 int $c;
+                 int $n;
+                 for ($t00 in $t0)
+                 {
+                     select $t00;
+                     curv;
+                     string $temp1[] = `ls -sl`;
+                     if(`size $temp1` > 0)
+                     {
+                         $cur[$c] = $temp1[0];
+                         $c++;
+                     }
+                     else
+                     {
+                         $others[$n] = $t00;
+                         $n++;
+                     }
+                 }
+                 if(`size $cur` > 0)
+                 {
+                     select $cur;
+                     if(`size $others` > 0)
+                     {
+                         select -add $others;
+                     }
+                     sel_C(1);//多子级检测子级是曲线
+
+                 }
+                 else
+                 {
+                     select $t0;
+                     sel_C(0);//多子级重判断
+                 }
+             }
          }
          else
          {
@@ -591,38 +635,52 @@ global proc selectC()
          select -d;
      }
 }
+/////////////////////////
+
 ////////////////////////
-global proc sel_C()
+global proc sel_C(int $b)
  {
+    string $ch1[];
+    string  $sel_c_2[];
     string $s[] = `ls -sl`;
     string $s0;
     int $c1;
-    string $ch1[];
+   // string $ch1[];
     string $ch[];
+    int $c;
     for($s0 in $s)
     {
-        string $t0[] = `listRelatives -c -f $s0`;
-        string $i;
-        int $c;
-         for($i in $t0)
-         {
-             if(`nodeType $i` != "nurbsCurve")
-             {
-                 select $i;
-                 selectC;
-                 string $temp[] = `ls -sl`;
-                 if(`size $temp` > 0)
-                 {   
-                     if (`size $temp` > 1)
+        select $s0;  curv;  string $curv_sel[] = `ls -sl`;
+        if(`size $curv_sel` > 0 && $b == 1)
+        {
+                $ch[$c] = $s0;
+                $c++;
+        }//多子级曲线输入判断
+        else
+        {
+            string $t0[] = `listRelatives -c -f $s0`;
+            string $i;
+            //int $c;
+             for($i in $t0)
+             {   
+                     if(`nodeType $i` != "nurbsCurve")
                      {
-                         $ch = `ls -sl`;
+                         select $i;
+                         selectC;
+                         string $temp[] = `ls -sl`;
+                         if(`size $temp` > 0)
+                         {   
+                             if (`size $temp` > 1)
+                             {
+                                 $ch = `ls -sl`;
+                             }
+                             else
+                             {
+                                 $ch[$c] = $temp[0];
+                                 $c++;
+                             }
+                         }
                      }
-                     else
-                     {
-                         $ch[$c] = $temp[0];
-                         $c++;
-                     }
-                 }
              }
          }
           select $ch;
