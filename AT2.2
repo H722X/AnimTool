@@ -672,7 +672,12 @@ global proc sel_C(int $b)
                          {   
                              if (`size $temp` > 1)
                              {
-                                 $ch = `ls -sl`;
+                                 string $temp_1;
+                                 for($temp_1 in $temp)
+                                 {
+                                     $ch[$c] = $temp_1;
+                                     $c++;
+                                 }
                              }
                              else
                              {
@@ -683,17 +688,18 @@ global proc sel_C(int $b)
                      }
              }
          }
-          select $ch;
           string $ch0;
           for($ch0 in $ch)
           {
-              select $ch0;
-              string $temp1[] = `ls -sl`;
-              $ch1[$c1] = $temp1[0];
-              $c1++;
+              if(`objExists $ch0`)
+              {
+                  $ch1[$c1] = $ch0;
+                  $c1++;
+              }
           }
-          select $ch1;
+          //select $ch1;
     }
+    select $ch1;
 }
 //////////////////////////选择子集Ending...........................................///////////////////////
 
