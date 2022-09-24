@@ -1,10 +1,4 @@
- //Edit by H7.
-//if the optionVar does'nt exist, create it.
-if( !`optionVar -exists "timeSliderLength"` )
-{
-    optionVar -intValue "timeSliderLength" 600;
-}
-
+//Edit by H7.
 global proc getOffsetAmount (string $textFieldName)
 {
     string $value = (`textField -q -text $textFieldName`);
@@ -21,62 +15,199 @@ global proc getNegOffsetAmount (string $textFieldName)
     
 }
 
+global vector $ini[];
+global float $x;  global float $y;  global float $z;
+global proc showNurbsCurvesTool_ini()
+{
+    global vector $ini[];
+    global float $x;  global float $y;  global float $z;
+    string $currentPanel[] = `getPanel -vis`;
+    string $c01;
+    for ($c01 in $currentPanel)
+    {
+        if(`match "modelPane" $c01` == "modelPane")
+        {
+             if (`modelEditor -query -nurbsCurves $c01` == true) 
+            {
+                $x=0.407843;  $y=0.631373;  $z=0.188235;
+            }
+            else
+            {
+                $x=0.3;  $y=0.3;  $z=0.3;
+            }
+            break;
+        }
+    }
+}
+////////////////////////////////////////////
 global proc showNurbsCurvesTool()
 {  
     global string $button_show[];
     //save Currently active panel in a String
-    string $currentPanel = `getPanel -withFocus`;
-    
-    //Toggles the visibility
-    if (`modelEditor -query -nurbsCurves $currentPanel` == true) 
+    string $currentPanel[] = `getPanel -vis`;
+    int $t;
+    string $c01;
+    for ($c01 in $currentPanel)
     {
-        modelEditor -e -nurbsCurves false `getPanel -withFocus`;
-        button -edit -bgc 0.3 0.3 0.3 $button_show[0];
-    }
-    else
-    {
-        modelEditor -e -nurbsCurves true `getPanel -withFocus`;
-        button -edit -bgc 0.407843 0.631373 0.188235 $button_show[0];
+        if(`match "modelPane" $c01` == "modelPane")
+        {
+            if($t == 0)
+            {
+                //Toggles the visibility
+                if (`modelEditor -query -nurbsCurves $c01` == true) 
+                {
+                    modelEditor -e -nurbsCurves false $c01;
+                    button -edit -bgc 0.3 0.3 0.3 $button_show[0];
+                    $t = 1;
+                }
+                else
+                {
+                    modelEditor -e -nurbsCurves true $c01;
+                    button -edit -bgc 0.407843 0.631373 0.188235 $button_show[0];
+                    $t = 2;
+                }
+            }
+            else if($t == 1)
+            {
+                modelEditor -e -nurbsCurves false $c01;
+                button -edit -bgc 0.3 0.3 0.3 $button_show[0];
+            }
+            else
+            {
+                modelEditor -e -nurbsCurves true $c01;
+                button -edit -bgc 0.407843 0.631373 0.188235 $button_show[0];
+            }
+        }
     }
 }
 /////////////////////////////////////////////////////////////////////////////
 
+global proc showPolygonsTool_ini()
+{
+    global vector $ini[];
+    global float $x;  global float $y;  global float $z;
+    string $currentPanel[] = `getPanel -vis`;
+    string $c01;
+    for ($c01 in $currentPanel)
+    {
+        if(`match "modelPane" $c01` == "modelPane")
+        {
+             if (`modelEditor -query -pm $c01` == true) 
+            {
+                $x=0.407843;  $y=0.631373;  $z=0.188235;
+            }
+            else
+            {
+                $x=0.3;  $y=0.3;  $z=0.3;
+            }
+            break;
+        }
+    }
+}
+//////////////////////////
 global proc showPolygonsTool()
 {
     global string $button_show[];
     //save Currently active panel in a String
-    string $currentPanel = `getPanel -withFocus`;
-    
-    //Toggles the visibility
-    if (`modelEditor -query -pm $currentPanel` == true) 
+    string $currentPanel[] = `getPanel -vis`;
+    int $t;
+    string $c01;
+    for ($c01 in $currentPanel)
     {
-        modelEditor -e -pm false `getPanel -withFocus`;
-         button -edit -bgc 0.3 0.3 0.3 $button_show[1];
-    }
-    else
-    {
-        modelEditor -e -pm true `getPanel -withFocus`;
-        button -edit -bgc 0.407843 0.631373 0.188235 $button_show[1];
+        if(`match "modelPane" $c01` == "modelPane")
+        {
+            if($t == 0)
+            {
+                //Toggles the visibility
+                if (`modelEditor -query -pm $c01` == true) 
+                {
+                    modelEditor -e -pm false $c01;
+                     button -edit -bgc 0.3 0.3 0.3 $button_show[1];
+                     $t = 1;
+                }
+                else
+                {
+                    modelEditor -e -pm true $c01;
+                    button -edit -bgc 0.407843 0.631373 0.188235 $button_show[1];
+                    $t = 2;
+                }
+            }
+            else if($t == 1)
+            {
+                modelEditor -e -pm false $c01;
+                button -edit -bgc 0.3 0.3 0.3 $button_show[1];
+            }
+            else
+            {
+                modelEditor -e -pm true $c01;
+                button -edit -bgc 0.407843 0.631373 0.188235 $button_show[1];
+            }
+        }
     }
 }
 //////////////////////////////////////////////////////////////////////////////
 
+global proc showJointTool_ini()
+{
+    global vector $ini[];
+    global float $x;  global float $y;  global float $z;
+    string $currentPanel[] = `getPanel -vis`;
+    string $c01;
+    for ($c01 in $currentPanel)
+    {
+        if(`match "modelPane" $c01` == "modelPane")
+        {
+             if (`modelEditor -query -j $c01` == true) 
+            {
+                $x=0.407843;  $y=0.631373;  $z=0.188235;
+            }
+            else
+            {
+                $x=0.3;  $y=0.3;  $z=0.3;
+            }
+            break;
+        }
+    }
+}
+/////////////////////////////
 global proc showJointTool()
 {
     global string $button_show[];
     //save Currently active panel in a String
-    string $currentPanel = `getPanel -withFocus`;
-    
-    //Toggles the visibility
-    if (`modelEditor -query -j $currentPanel` == true) 
+    string $currentPanel[] = `getPanel -vis`;
+    int $t;
+    string $c01;
+    for ($c01 in $currentPanel)
     {
-        modelEditor -e -j false `getPanel -withFocus`;
-         button -edit -bgc 0.3 0.3 0.3 $button_show[2];
-    }
-    else
-    {
-        modelEditor -e -j true `getPanel -withFocus`;
-        button -edit -bgc 0.407843 0.631373 0.188235 $button_show[2];
+        if(`match "modelPane" $c01` == "modelPane")
+        {
+            if($t == 0)
+            {
+                //Toggles the visibility
+                if (`modelEditor -query -j $c01` == true) 
+                {
+                    modelEditor -e -j false $c01;
+                    button -edit -bgc 0.3 0.3 0.3 $button_show[2];
+                    $t = 1;
+                }
+                else
+                {
+                    modelEditor -e -j true $c01;
+                    button -edit -bgc 0.407843 0.631373 0.188235 $button_show[2];
+                    $t = 2;
+                }
+            }
+            else if($t == 1)
+            {
+               modelEditor -e -j false $c01;
+               button -edit -bgc 0.3 0.3 0.3 $button_show[2];
+            }
+            else
+            {
+                modelEditor -e -j true $c01;
+                button -edit -bgc 0.407843 0.631373 0.188235 $button_show[2];
+            }
+        }
     }
 }
 
@@ -228,12 +359,6 @@ global proc graphEditorViz ()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-global proc timeSliderSetLengthProc (string $wantedLength)
-{
-    string $value = (`textField -q -text $wantedLength`);
-    int $lengthInt = (int)$value;
-    optionVar -iv "timeSliderLength" $lengthInt;
-}
 //////////////////////////////////////////////////////////////
 
 
@@ -274,23 +399,27 @@ $object = `button -command ("getNegOffsetAmount(\"" + $offsetAmountField + "\");
 formLayout -edit -attachForm $object "top" 27 -attachForm $object "left" 10 $form;
 //=========================================
 // Creating Element nurbViz
-$button_show[0] = `button -command "showNurbsCurvesTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Curves" -w 39 -h 34`;
-formLayout -edit -attachForm $button_show[0] "top" 117 -attachForm $button_show[0] "left" 10 $form;
+global float $x;  global float $y;  global float $z;
+showNurbsCurvesTool_ini;
+$button_show[0] = `button -command "showNurbsCurvesTool()" -backgroundColor $x $y $z  -label "Curves" -w 39 -h 34`;
+formLayout -edit -attachForm $button_show[0] "top" 117 -attachForm $button_show[0] "left" 10 $form;                           
 //=========================================
-$button_show[1] = `button -command "showPolygonsTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Mesh" -w 39 -h 34`;
+showPolygonsTool_ini;
+$button_show[1] = `button -command "showPolygonsTool()" -backgroundColor $x $y $z -label "Mesh" -w 39 -h 34`;
 formLayout -edit -attachForm $button_show[1] "top" 117 -attachForm $button_show[1] "left" 52 $form;
 //=========================================
-$button_show[2] = `button -command "showJointTool()" -backgroundColor 0.407843 0.631373 0.188235 -label "Joint" -w 39 -h 34`;
+showJointTool_ini;
+$button_show[2] = `button -command "showJointTool()" -backgroundColor $x $y $z -label "Joint" -w 39 -h 34`;
 formLayout -edit -attachForm $button_show[2] "top" 117 -attachForm $button_show[2] "left" 93 $form;
 //=========================================
 // Creating Element motionTrailViz
-$object = `button -command "motionTrailTool()" -backgroundColor 0.188235 0.631373 0.364706 -label "Motion Trail Tool" -w 122 -h 34`;
+$object = `button -command "motionTrailTool()" -backgroundColor 0.4 0.65 0.5 -label "Motion Trail Tool" -w 122 -h 34`;
 formLayout -edit -attachForm $object "top" 160 -attachForm $object "left" 10 $form;
 //=========================================
 $object = `checkBox -v 0 -label "L" -sbm "Loop" "StaggerLoop"`;
 formLayout -edit -attachForm $object "top" 72 -attachForm $object "left" 10 $form;
 // Creating Element keyStag
-$object = `button -command ("bh_staggerProc(\"" + $offsetAmountField + "\");") -backgroundColor 0.541176 0.282353 0.2 -label "Stagger Keys" -w 85 -h 22`;
+$object = `button -command ("bh_staggerProc(\"" + $offsetAmountField + "\");") -backgroundColor 0.4 0.5 0.2 -label "Stagger Keys" -w 85 -h 22`;
 formLayout -edit -attachForm $object "top" 68 -attachForm $object "left" 45 $form;
 //=========================================
 // Creating Element Separator 01
@@ -298,19 +427,19 @@ $object = `separator -w 122 -h 11`;
 formLayout -edit -attachForm $object "top" 98 -attachForm $object "left" 7 $form;
 //=========================================
 // Creating Element GraphViz
-$object = `button -command "graphEditorViz ()" -backgroundColor 0.788235 0.631373 0.364706 -label "Graph Editor +" -w 122 -h 34`;
+$object = `button -command "graphEditorViz ()" -backgroundColor 0.5 0.631373 0.6 -label "Graph Editor +" -w 122 -h 34`;
 formLayout -edit -attachForm $object "top" 203 -attachForm $object "left" 10 $form;
 //=========================================
   
-$object = `separator -w 122 -h 8`;
-formLayout -edit -attachForm $object "top" 239 -attachForm $object "left" 7 $form;
+//$object = `separator -w 122 -h 8`;
+//formLayout -edit -attachForm $object "top" 239 -attachForm $object "left" 7 $form;
 
 //AutoBind===================================
 setParent ..;
 string $BindMenuBarLayout = `menuBarLayout`;
 string $form2 = `formLayout -numberOfDivisions 100`;
 
-menu -label "AutoBindJoint" AutoBind;
+menu -label "——AutoBindJoint——" AutoBind;
       menuItem -label "AutoBind"  -checkBox on AutoBindCheckBox;
       menuItem -label "Auto end+" -checkBox on EndCheckBox;
       menuItem -label "AutoJointSize" -checkBox on JointSizeCheckBox;
@@ -345,16 +474,20 @@ $object = `button -p $form2 -command "selectPlus" -backgroundColor 0.3 0.3 0.3 -
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 52 $form2;
 
 $object = `button -p $form2 -command "sel_P" -backgroundColor 0.6 0.14902 0 -label "↑↑" -w 39 -h 34`;
+            popupMenu;
+                     menuItem  -label "keepTop" -cb on keepTopCheckBox; 
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 10 $form2;
 
 $object = `button -p $form2 -command "sel_C(0)" -backgroundColor 0.188235 0.403922 0.631373 -label "↓↓" -w 39 -h 34`;
+           popupMenu;
+                     menuItem  -label "keepEnd" -cb off keepEndCheckBox; 
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 93 $form2;
 
 //=========================================
 
 setParent..;
 showWindow( $window );
-window -edit -widthHeight 142.0 350.0 "mainWindow";
+window -edit -widthHeight 144.0 340.0 "mainWindow";
 }//END MainWindow Creation
 
 //////////////////////////////////////////排序starting...................
@@ -523,6 +656,14 @@ global proc sel_P()
            $p[$c] = $temp[0];
            $c++;
        }
+       else
+       {
+           if(`menuItem -q -checkBox keepTopCheckBox` == 1)
+           {
+               $p[$c] = $i;
+               $c++;
+           }
+       }
     }
     select $p;
 }
@@ -636,7 +777,32 @@ global proc selectC()
      }
 }
 /////////////////////////
-
+//判断是否为末端控制器
+global proc J_End(string $end)
+{
+    string $shape[];
+    string $ch[] = `listRelatives -c -f $end`;
+    string $ch1;
+    for($ch1 in $ch)
+    {
+        if(`nodeType $ch1` == "nurbsCurve")
+        {
+            $shape[0]= $ch1;
+            break;
+        }
+    }
+    string $ad[] = `listRelatives -ad -f $end`;
+    string $ad1;
+    for($ad1 in $ad)
+    {
+        if(`nodeType $ad1` == "nurbsCurve" && $ad1 != $shape[0])
+        {
+            select -cl;
+            break;
+        }
+    }
+    
+}
 ////////////////////////
 global proc sel_C(int $b)
  {
@@ -660,7 +826,19 @@ global proc sel_C(int $b)
         {
             string $t0[] = `listRelatives -c -f $s0`;
             string $i;
-            //int $c;
+            //
+            if(`menuItem -q -checkBox keepEndCheckBox` == 1)
+            {
+                select -r $s0;
+                J_End($s0);
+                string $temp_J_end[] = `ls -sl`;
+                if(`size $temp_J_end` >= 1 && `size $curv_sel` > 0)
+                {
+                    $ch[$c] = $s0;
+                    $c++;
+                }
+            }
+            //保持末端
              for($i in $t0)
              {   
                      if(`nodeType $i` != "nurbsCurve")
