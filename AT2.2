@@ -279,15 +279,17 @@ global proc bh_staggerProc (string $textFieldName)
 
 global proc graphEditorViz ()
 {
-    int $TSLength = `optionVar -q "timeSliderLength"`;
+    //int $TSLength = `optionVar -q "timeSliderLength"`;
     if ( `window -exists graphEditorPlusWindow` )
     {
+        clearFilters ();
        deleteUI graphEditorPlusWindow;
+       
     }
     
     else
     {            
-        window -title "Graph Editor Plus by Maxim Ouellet" "graphEditorPlusWindow";
+        window -title "Graph Editor Plus" "graphEditorPlusWindow";
           string $form = `formLayout`;
         
         // Add a paneLayout to hold the Graph Editor
@@ -299,23 +301,20 @@ global proc graphEditorViz ()
             string $row = `rowLayout -numberOfColumns 17`;
             global string $toggleButton[];
 
-              $toggleButton[0] = `button -command "curveSelection(\"translateX\", 0)" -backgroundColor 0.6 0 0 -label "tX"`;   
-              $toggleButton[1] = `button -command "curveSelection(\"translateY\", 1)" -backgroundColor 0 0.6 0 -label "tY"`;
-              $toggleButton[2] = `button -command "curveSelection(\"translateZ\", 2)" -backgroundColor 0 0.254902 0.6 -label "tZ"`;
-              $toggleButton[3] = `button -command "curveSelection(\"rotateX\", 3)" -backgroundColor 0.6 0 0 -label "rX"`;
-              $toggleButton[4] = `button -command "curveSelection(\"rotateY\", 4)" -backgroundColor 0 0.6 0 -label "rY"`;          
-              $toggleButton[5] = `button -command "curveSelection(\"rotateZ\", 5)" -backgroundColor 0 0.254902 0.6 -label "rZ"`;
-              $toggleButton[6] = `button -command "curveSelection(\"scaleX\", 6)" -backgroundColor 0.6 0 0 -label "sX"`;
-              $toggleButton[7] = `button -command "curveSelection(\"scaleY\", 7)" -backgroundColor 0 0.6 0 -label "sY"`; 
-              $toggleButton[8] = `button -command "curveSelection(\"scaleZ\", 8)" -backgroundColor 0 0.254902 0.6 -label "sZ"`;                   
-              button -command "clearFilters" -backgroundColor 1 1 1 -label "CLEAR";
-              text -label " - ------------ - " -vis false -w 30;
-              string $offsetAmountField = `textField -text "1" -w 30`;
-              string $object = `button -command ("getOffsetAmount(\"" + $offsetAmountField + "\");") -backgroundColor 0.188235 0.403922 0.631373 -label "Move" -w 68`;
-              text -label " - ------------ - " -vis false -w 30;
-              symbolButton -image "timerew.xpm"  -c "playButtonStart";
-              symbolButton -image "timeplay.xpm" -c "playButtonForward";
-              timePort -bgc 0.4 0.4 0.4 -w 750 -h 28;
+              $toggleButton[0] = `button -command "curveSelection(\"translateX\", 0)" -backgroundColor 0.812 0.172 0.396 -label "tX"`;   
+              $toggleButton[1] = `button -command "curveSelection(\"translateY\", 1)" -backgroundColor 0.369 0.839 0.761 -label "tY"`;
+              $toggleButton[2] = `button -command "curveSelection(\"translateZ\", 2)" -backgroundColor 0.043 0.365 0.475 -label "tZ"`;
+              text -label "——————" -w 30;
+              $toggleButton[3] = `button -command "curveSelection(\"rotateX\", 3)" -backgroundColor 0.812 0.172 0.396 -label "rX"`;
+              $toggleButton[4] = `button -command "curveSelection(\"rotateY\", 4)" -backgroundColor 0.369 0.839 0.761 -label "rY"`;          
+              $toggleButton[5] = `button -command "curveSelection(\"rotateZ\", 5)" -backgroundColor 0.043 0.365 0.475 -label "rZ"`;
+              text -label "——————" -w 30;
+              $toggleButton[6] = `button -command "curveSelection(\"scaleX\", 6)" -backgroundColor 0.812 0.172 0.396 -label "sX"`;
+              $toggleButton[7] = `button -command "curveSelection(\"scaleY\", 7)" -backgroundColor 0.369 0.839 0.761 -label "sY"`; 
+              $toggleButton[8] = `button -command "curveSelection(\"scaleZ\", 8)" -backgroundColor 0.043 0.365 0.475 -label "sZ"`;    
+              text -label "——————" -w 30;               
+              button -command "clearFilters" -backgroundColor 0.839 0.839 0.839 -label "CLEAR";
+              clearFilters ();
               setParent ..;
         
             setParent ..;
@@ -1609,7 +1608,7 @@ global proc curveSelection (string $chosenAxis, int $toggleCheck)
     {
         filterUISelectAttributesCheckbox $chosenAxis 1 graphEditor1OutlineEd;
         $toggleCounter[$toggleCheck] = 1;
-        button -edit -bgc 1 1 1 $toggleButton[$toggleCheck];
+        button -edit -bgc 0.839 0.839 0.839 $toggleButton[$toggleCheck];
         
         
     }
@@ -1617,9 +1616,9 @@ global proc curveSelection (string $chosenAxis, int $toggleCheck)
     {
         filterUISelectAttributesCheckbox $chosenAxis 0 graphEditor1OutlineEd;
         $toggleCounter[$toggleCheck] = 0;
-        if($toggleCheck == 0 || $toggleCheck == 3 || $toggleCheck == 6) {button -edit -bgc 0.6 0 0 $toggleButton[$toggleCheck];}
-        if($toggleCheck == 1 || $toggleCheck == 4 || $toggleCheck == 7) {button -edit -bgc 0 0.6 0 $toggleButton[$toggleCheck];}
-        if($toggleCheck == 2 || $toggleCheck == 5 || $toggleCheck == 8) {button -edit -bgc 0 0.254902 0.6 $toggleButton[$toggleCheck];}
+        if($toggleCheck == 0 || $toggleCheck == 3 || $toggleCheck == 6) {button -edit -bgc 0.812 0.172 0.396 $toggleButton[$toggleCheck];}
+        if($toggleCheck == 1 || $toggleCheck == 4 || $toggleCheck == 7) {button -edit -bgc 0.369 0.839 0.761 $toggleButton[$toggleCheck];}
+        if($toggleCheck == 2 || $toggleCheck == 5 || $toggleCheck == 8) {button -edit -bgc 0.043 0.365 0.475 $toggleButton[$toggleCheck];}
        
     }
 }
@@ -1628,25 +1627,15 @@ global proc clearFilters ()
 {
     global int $toggleCounter[];
     global string $toggleButton[];
-    filterUISelectAttributesCheckbox translateX 0 graphEditor1OutlineEd;
-    filterUISelectAttributesCheckbox translateY 0 graphEditor1OutlineEd;
-    filterUISelectAttributesCheckbox translateZ 0 graphEditor1OutlineEd;
-    filterUISelectAttributesCheckbox rotateX 0 graphEditor1OutlineEd;
-    filterUISelectAttributesCheckbox rotateY 0 graphEditor1OutlineEd;
-    filterUISelectAttributesCheckbox rotateZ 0 graphEditor1OutlineEd;
-    filterUISelectAttributesCheckbox scaleX 0 graphEditor1OutlineEd;
-    filterUISelectAttributesCheckbox scaleY 0 graphEditor1OutlineEd;
-    filterUISelectAttributesCheckbox scaleZ 0 graphEditor1OutlineEd;
-    clear $toggleCounter;
-    button -edit -bgc 0.6 0 0 $toggleButton[0];
-    button -edit -bgc 0 0.6 0 $toggleButton[1];
-    button -edit -bgc 0 0.254902 0.6 $toggleButton[2];
-    button -edit -bgc 0.6 0 0 $toggleButton[3];
-    button -edit -bgc 0 0.6 0 $toggleButton[4];
-    button -edit -bgc 0 0.254902 0.6 $toggleButton[5];
-    button -edit -bgc 0.6 0 0 $toggleButton[6];
-    button -edit -bgc 0 0.6 0 $toggleButton[7];
-    button -edit -bgc 0 0.254902 0.6 $toggleButton[8];
+    string $flag[] = {"translateX","translateY","translateZ","rotateX","rotateY","rotateZ","scaleX","scaleY","scaleZ"};
+    int $i;
+    for ($i=0;$i<9;$i++)
+    {
+        if($toggleCounter[$i] == 1)
+        {
+            curveSelection($flag[$i], $i);
+        }
+    }
     
 }
 ///////////////////////////////////////////////////////////////////////////
