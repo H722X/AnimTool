@@ -1,17 +1,14 @@
-//Edit by H7.
 global proc getOffsetAmount (string $textFieldName)
 {
-    string $value = (`textField -q -text $textFieldName`);
-    int $intVal = (int)$value;
-    keyframe -edit -relative -timeChange ($intVal);
+    int $value = (`intField -q -v $textFieldName`);
+    keyframe -edit -relative -timeChange ($value);
     
 }
 
 global proc getNegOffsetAmount (string $textFieldName)
 {
-    string $value = ("-" + `textField -q -text $textFieldName`);
-    int $intVal = (int)$value;
-    keyframe -edit -relative -timeChange ($intVal);
+    int $value = ("-" + `intField -q -v $textFieldName`);
+    keyframe -edit -relative -timeChange ($value);
     
 }
 
@@ -252,9 +249,8 @@ global proc bh_staggerProc (string $textFieldName)
     {
 	
 	    select -r $sel[$rc];
-        string $value = (`textField -q -text $textFieldName`);
-        int $intVal = (int)$value;
-        int $staggerVal = ($intVal*$rc);
+        int $value = (`intField -q -v $textFieldName`);
+        int $staggerVal = ($value*$rc);
     
         keyframe -e -iub true -r -o over -tc ($staggerVal)  ; // nudge forward
         
@@ -382,7 +378,7 @@ string $form = `formLayout -numberOfDivisions 100`;
 string $object;
 
 // Creating Element frameOffset
-string $offsetAmountField = `textField -text "1" -w 34 -h 34`;
+string $offsetAmountField = `intField -v 1 -w 34 -h 34`;
 formLayout -edit -attachForm $offsetAmountField "top" 27 -attachForm $offsetAmountField "left" 54 $form;
 //=========================================
 // Creating Element toRight
