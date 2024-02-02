@@ -207,6 +207,71 @@ global proc showJointTool()
         }
     }
 }
+/////////////////////////////////////
+global proc showLocTool_ini()
+{
+    global vector $ini[];
+    global float $x;  global float $y;  global float $z;
+    string $currentPanel[] = `getPanel -vis`;
+    string $c01;
+    for ($c01 in $currentPanel)
+    {
+        if(`match "modelPane" $c01` == "modelPane")
+        {
+             if (`modelEditor -query -lc $c01` == true) 
+            {
+                $x=0.407843;  $y=0.631373;  $z=0.188235;
+            }
+            else
+            {
+                $x=0.3;  $y=0.3;  $z=0.3;
+            }
+            break;
+        }
+    }
+}
+/////////////////////////////
+global proc showLocTool()
+{
+    global string $button_show[];
+    //save Currently active panel in a String
+    string $currentPanel[] = `getPanel -vis`;
+    int $t;
+    string $c01;
+    for ($c01 in $currentPanel)
+    {
+        if(`match "modelPane" $c01` == "modelPane")
+        {
+            if($t == 0)
+            {
+                //Toggles the visibility
+                if (`modelEditor -query -lc $c01` == true) 
+                {
+                    modelEditor -e -lc false $c01;
+                    button -edit -bgc 0.3 0.3 0.3 $button_show[3];
+                    $t = 1;
+                }
+                else
+                {
+                    modelEditor -e -lc true $c01;
+                    button -edit -bgc 0.407843 0.631373 0.188235 $button_show[3];
+                    $t = 2;
+                }
+            }
+            else if($t == 1)
+            {
+               modelEditor -e -lc false $c01;
+               button -edit -bgc 0.3 0.3 0.3 $button_show[3];
+            }
+            else
+            {
+                modelEditor -e -lc true $c01;
+                button -edit -bgc 0.407843 0.631373 0.188235 $button_show[3];
+            }
+        }
+    }
+}
+////////////////////////////////////
 
 global proc motionTrailTool()
 {
@@ -310,6 +375,8 @@ global proc graphEditorViz ()
               $toggleButton[8] = `button -command "curveSelection(\"scaleZ\", 8)" -backgroundColor 0.043 0.365 0.475 -label "sZ"`;    
               text -label "——————" -w 30;               
               button -command "clearFilters" -backgroundColor 0.839 0.839 0.839 -label "CLEAR";
+              text -label "      " -w 30;
+              button -command filterCurve -label "EulerFilter";
               clearFilters ();
               setParent ..;
         
@@ -368,7 +435,7 @@ if ( `window -exists mainWindow` )
 }
 
 
-string $window = `window  -title "AnimTool_2.2" 
+string $window = `window  -title "AnimTool_2.3" 
                                  -tlb 1
                                  -s 1
                                  -menuBar true
@@ -378,16 +445,16 @@ string $form = `formLayout -numberOfDivisions 100`;
 string $object;
 
 // Creating Element frameOffset
-string $offsetAmountField = `intField -v 1 -w 34 -h 34`;
-formLayout -edit -attachForm $offsetAmountField "top" 27 -attachForm $offsetAmountField "left" 54 $form;
+string $offsetAmountField = `intField -v 1 -w 36 -h 34`;
+formLayout -edit -attachForm $offsetAmountField "top" 27 -attachForm $offsetAmountField "left" 50 $form;
 //=========================================
 // Creating Element toRight
 $object = `button -command ("getOffsetAmount(\"" + $offsetAmountField + "\");") -backgroundColor 0.188235 0.403922 0.631373 -label "-->" -w 34 -h 34`;
-formLayout -edit -attachForm $object "top" 27 -attachForm $object "left" 98 $form;
+formLayout -edit -attachForm $object "top" 27 -attachForm $object "left" 139 $form;
 //=========================================
 // Creating Element Text01
 $object = `text -label "offset keys by X frames." -w 122 -h 20`;
-formLayout -edit -attachForm $object "top" 7 -attachForm $object "left" 10 $form;
+formLayout -edit -attachForm $object "top" 7 -attachForm $object "left" 31 $form;
 //=========================================
 // Creating Element toLeft
 $object = `button -command ("getNegOffsetAmount(\"" + $offsetAmountField + "\");") -backgroundColor 0.6 0.14902 0 -label "<--" -w 34 -h 34`;
@@ -397,33 +464,38 @@ formLayout -edit -attachForm $object "top" 27 -attachForm $object "left" 10 $for
 global float $x;  global float $y;  global float $z;
 showNurbsCurvesTool_ini;
 $button_show[0] = `button -command "showNurbsCurvesTool()" -backgroundColor $x $y $z  -label "Curves" -w 39 -h 34`;
-formLayout -edit -attachForm $button_show[0] "top" 117 -attachForm $button_show[0] "left" 10 $form;                           
+formLayout -edit -attachForm $button_show[0] "top" 87 -attachForm $button_show[0] "left" 10 $form;                           
 //=========================================
 showPolygonsTool_ini;
 $button_show[1] = `button -command "showPolygonsTool()" -backgroundColor $x $y $z -label "Mesh" -w 39 -h 34`;
-formLayout -edit -attachForm $button_show[1] "top" 117 -attachForm $button_show[1] "left" 52 $form;
+formLayout -edit -attachForm $button_show[1] "top" 87 -attachForm $button_show[1] "left" 52 $form;
 //=========================================
 showJointTool_ini;
 $button_show[2] = `button -command "showJointTool()" -backgroundColor $x $y $z -label "Joint" -w 39 -h 34`;
-formLayout -edit -attachForm $button_show[2] "top" 117 -attachForm $button_show[2] "left" 93 $form;
+formLayout -edit -attachForm $button_show[2] "top" 87 -attachForm $button_show[2] "left" 94 $form;
+//=========================================
+showLocTool_ini;
+$button_show[3] = `button -command "showLocTool()" -backgroundColor $x $y $z -label "Loc" -w 39 -h 34`;
+formLayout -edit -attachForm $button_show[3] "top" 87 -attachForm $button_show[3] "left" 136 $form;
 //=========================================
 // Creating Element motionTrailViz
-$object = `button -command "motionTrailTool()" -backgroundColor 0.4 0.65 0.5 -label "Motion Trail Tool" -w 122 -h 34`;
-formLayout -edit -attachForm $object "top" 160 -attachForm $object "left" 10 $form;
+$object = `button -command "motionTrailTool()" -backgroundColor 0.4 0.65 0.5 -label "Motion Trail" -w 82 -h 34`;
+formLayout -edit -attachForm $object "top" 130 -attachForm $object "left" 10 $form;
 //=========================================
-$object = `checkBox -v 0 -label "L" -sbm "Loop" "StaggerLoop"`;
-formLayout -edit -attachForm $object "top" 72 -attachForm $object "left" 10 $form;
+//$object = `checkBox -v 0 -label "L" -sbm "Loop" "StaggerLoop"`;
 // Creating Element keyStag
-$object = `button -command ("bh_staggerProc(\"" + $offsetAmountField + "\");") -backgroundColor 0.4 0.5 0.2 -label "Stagger Keys" -w 85 -h 22`;
-formLayout -edit -attachForm $object "top" 68 -attachForm $object "left" 45 $form;
+$object = `button -command ("bh_staggerProc(\"" + $offsetAmountField + "\");") -backgroundColor 0.4 0.5 0.2 -label "Stagger" -w 44 -h 34`;
+                popupMenu;
+                    menuItem -label "Loop" -cb off StaggerLoop;
+formLayout -edit -attachForm $object "top" 27 -attachForm $object "left" 91 $form;
 //=========================================
 // Creating Element Separator 01
-$object = `separator -w 122 -h 11`;
-formLayout -edit -attachForm $object "top" 98 -attachForm $object "left" 7 $form;
+$object = `separator -w 122 -h 5`;
+formLayout -edit -attachForm $object "top" 68 -attachForm $object "left" 28 $form;
 //=========================================
 // Creating Element GraphViz
-$object = `button -command "graphEditorViz ()" -backgroundColor 0.5 0.631373 0.6 -label "Graph Editor +" -w 122 -h 34`;
-formLayout -edit -attachForm $object "top" 203 -attachForm $object "left" 10 $form;
+$object = `button -command "graphEditorViz ()" -backgroundColor 0.5 0.631373 0.6 -label "Graph Editor +" -w 82 -h 34`;
+formLayout -edit -attachForm $object "top" 130 -attachForm $object "left" 94 $form;
 //=========================================
   
 //$object = `separator -w 122 -h 8`;
@@ -434,55 +506,53 @@ setParent ..;
 string $BindMenuBarLayout = `menuBarLayout`;
 string $form2 = `formLayout -numberOfDivisions 100`;
 
-menu -label "——AutoBindJoint——" AutoBind;
+menu -label "AutoBindJoint" AutoBind;
       menuItem -label "AutoBind"  -checkBox on AutoBindCheckBox;
       menuItem -label "Auto end+" -checkBox on EndCheckBox;
       menuItem -label "AutoJointSize" -checkBox on JointSizeCheckBox;
-      //menuItem -label "AutoSort" -checkBox off SortCheckBox;
 
-
-//$object = `checkBox -ann "Auto add end controls when bind" -label "" -v 1 -h 18  EndCheckBox`;
-//formLayout -edit -attachForm $object "top" 303 -attachForm $object "left" 10 $form;
-
-//$object = `checkBox -ann "Auto Bind Joint" -label "AutoBindJoint" -v 1 -h 18  AutoBindCheckBox`;
-//formLayout -edit -attachForm $object "top" 245 -attachForm $object "left" 10 $form;
 
 $object = `button  -p $form2 -command "createEnd(1)" -backgroundColor 0.3 0.3 0.3 -label "End+" -w 39 -h 34`;
                     popupMenu;
                                 menuItem  -label "Clear" -c "CleanUpEnd";
-formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 93 $form2;
-
-//$object = `button -p $form2 -command "CleanUpEnd" -backgroundColor 0.3 0.3 0.3 -label "Clear" -w 39 -h 34`;
-//formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 52 $form2;
+formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 94 $form2;
 
 $object = `button -p $form2 -command "bindControlsAll" -backgroundColor 0.3 0.3 0.3 -label "Bind" -w 39 -h 34`;
 formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 10 $form2;
-
+//
 $object = `button -p $form2 -command "clearBind" -backgroundColor 0.3 0.3 0.3 -label "Bake" -w 39 -h 34`;
 formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 52 $form2;
-
+//
 $object = `button -p $form2 -command "selectPlus" -backgroundColor 0.3 0.3 0.3 -label "sel+" -w 39 -h 34`;
                     popupMenu;
                                 menuItem  -label "Ctrl->Joint" -c "sel_COJ"; 
                                 menuItem  -label "Joint->Ctrl" -c "sel_JOC";
                                 menuItem  -label "straight" -c "straight";
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 52 $form2;
-
+//
+$object = `button -p $form2 -command "selectHi_upGroup" -backgroundColor 0.3 0.3 0.3 -label "++" -w 39 -h 34`;
+            popupMenu;
+                    radioMenuItemCollection;
+                    menuItem  -label "normalSelect" -rb on;
+                    menuItem  -label "autoAll" -rb off select_autoAll_CheckBox;
+                    menuItem  -label "no_Limit" -rb off select_noLimit_CheckBox;
+formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 94 $form2;
+//
 $object = `button -p $form2 -command "sel_P" -backgroundColor 0.6 0.14902 0 -label "↑↑" -w 39 -h 34`;
             popupMenu;
                      menuItem  -label "keepTop" -cb on keepTopCheckBox; 
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 10 $form2;
-
+//
 $object = `button -p $form2 -command "sel_C(0)" -backgroundColor 0.188235 0.403922 0.631373 -label "↓↓" -w 39 -h 34`;
-           popupMenu;
+            popupMenu;
                      menuItem  -label "keepEnd" -cb off keepEndCheckBox; 
-formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 93 $form2;
+formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 136 $form2;
 
 //=========================================
 
 setParent..;
 showWindow( $window );
-window -edit -widthHeight 144.0 340.0 "mainWindow";
+window -edit -widthHeight 188.0 278.0 "mainWindow";
 }//END MainWindow Creation
 
 //////////////////////////////////////////排序starting...................
@@ -562,6 +632,90 @@ global proc selectHi()
     //}
 }
 //////////////////////////////////////////////////////////////////////
+/////selectHi++
+//减选所有子级
+global proc dropTail(string $selList[])
+{
+    select $selList;
+    string $sel;
+    for($sel in $selList)
+    {
+       string $children[] = `listRelatives -ad $sel`;
+       string $newSelList[] = stringArrayRemove($children, $selList);
+       if(`size $newSelList` < `size $selList`)
+       {
+            dropTail($newSelList);
+            break;
+       }
+       
+    }
+}
+//返回所有父级
+global string $allParents[];
+global proc returnAllParents(string $sel)
+{
+    global string $allParents[];
+    string $parent[] = `listRelatives -ap -f -type "transform" $sel`;
+    if (`size $parent` > 0)
+    {   
+        $allParents[`size $allParents`] = $parent[0];
+        returnAllParents($parent[0]);
+    }
+}
+//遍历所选控制器父级group，判断group下所有控制器的数量是否>所选控制器下所有控制器数量
+global proc selectHi_upGroup()
+{
+    global string $allParents[];
+    string $selectHi[];
+    string $selectList[] = `ls -sl`;    dropTail($selectList);      string $selectList2[] = `ls -sl`;
+    string $sel;
+    for ($sel in $selectList2)
+    {
+        returnAllParents($sel);
+        select -r $allParents;  clear $allParents;
+        string $group_pList[] = `ls -sl`;
+        string $group;
+        for($group in $group_pList)
+        {
+            string $temp[] = `listRelatives -ad -f -type "nurbsCurve" $group`;
+            int $n_groupChildren = `size $temp`;
+            $temp = `listRelatives -ad -f -type "nurbsCurve" $sel`;
+            int $n_selChildren = `size $temp`;
+            if ($n_groupChildren > $n_selChildren)
+            {
+                $selectHi[`size $selectHi`] = $group;
+                break;
+            }
+        }
+    }
+    select $selectHi;
+    selectHi;
+    string $tempSel[] = `ls -sl`;
+    if (`menuItem -q -radioButton select_autoAll_CheckBox` == 1)
+    {
+        if(`size $tempSel` > `size $selectList`)
+        {
+            selectHi_upGroup();
+        }
+    }
+    if (`menuItem -q -radioButton select_noLimit_CheckBox` == 1)
+    {
+        if(`size $tempSel` == `size $selectList`)
+        {
+            select $selectHi;
+            selectHi_upGroup();
+        }
+        if(`size $tempSel` == 0)
+        {
+            dropTail($selectList);
+            selectHi;
+        }   
+    }
+    
+}
+
+
+/////
 
 global proc straight()
 {
@@ -1575,7 +1729,7 @@ global proc clearBind()
             $ctrlList[$c] = $temp[0];
             $c++;
         }
-        bakeResults -t ($startFrame+":"+$endFrame) $ctrlList;
+        bakeResults -t ($startFrame+":"+$endFrame)  -preserveOutsideKeys on $ctrlList;
 
         delete $proxyJointLst;
         if(`size $T` == 0)
