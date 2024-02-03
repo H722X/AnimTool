@@ -301,7 +301,7 @@ global proc bh_staggerProc (string $textFieldName)
 	
 	string $sel[] = `ls -sl`;
     int $selCount = size($sel);
-    if(`checkBox -q -v StaggerLoop` == 1)
+    if(`menuItem -q -cb StaggerLoop` == 1)
         {
             setInfinity -pri cycle;
             setInfinity -poi cycle;
@@ -319,7 +319,7 @@ global proc bh_staggerProc (string $textFieldName)
     
         keyframe -e -iub true -r -o over -tc ($staggerVal)  ; // nudge forward
         
-        if(`checkBox -q -v StaggerLoop` == 1)
+        if(`menuItem -q -cb StaggerLoop` == 1)
         {        
             bakeResults -simulation true -t ($timeStart+":"+$timeEnd) -smart 1;
             selectKey -t (":"+($timeStart-1)) $sel[$rc];
@@ -329,7 +329,7 @@ global proc bh_staggerProc (string $textFieldName)
         }
 	}
 	select -r $sel;
-	if(`checkBox -q -v StaggerLoop` == 1)
+	if(`menuItem -q -cb StaggerLoop` == 1)
         {
             setInfinity -pri constant;
             setInfinity -poi constant;
