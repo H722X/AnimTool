@@ -494,7 +494,7 @@ $object = `separator -w 122 -h 5`;
 formLayout -edit -attachForm $object "top" 68 -attachForm $object "left" 28 $form;
 //=========================================
 // Creating Element GraphViz
-$object = `button -command "graphEditorViz ()" -backgroundColor 0.5 0.631373 0.6 -label "Graph Editor +" -w 82 -h 34`;
+$object = `button -command "graphEditorViz ()" -backgroundColor 0.5 0.631373 0.6 -label "GraphEditor+" -w 82 -h 34`;
 formLayout -edit -attachForm $object "top" 130 -attachForm $object "left" 94 $form;
 //=========================================
   
@@ -517,6 +517,9 @@ $object = `button  -p $form2 -command "createEnd(1)" -backgroundColor 0.3 0.3 0.
                                 menuItem  -label "Clear" -c "CleanUpEnd";
 formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 94 $form2;
 
+$object = `button -p $form2 -c "switchParts" -backgroundColor 0.3 0.3 0.3 -label "switch" -w 39 -h 34`;
+formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 136 $form2;
+
 $object = `button -p $form2 -command "bindControlsAll" -backgroundColor 0.3 0.3 0.3 -label "Bind" -w 39 -h 34`;
 formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 10 $form2;
 //
@@ -530,7 +533,7 @@ $object = `button -p $form2 -command "selectPlus" -backgroundColor 0.3 0.3 0.3 -
                                 menuItem  -label "straight" -c "straight";
 formLayout -edit -attachForm $object "top" 35 -attachForm $object "left" 52 $form2;
 //
-$object = `button -p $form2 -command "selectHi_upGroup" -backgroundColor 0.3 0.3 0.3 -label "++" -w 39 -h 34`;
+$object = `button -p $form2 -command "selectHiPlus" -backgroundColor 0.3 0.3 0.3 -label "++" -w 39 -h 34`;
             popupMenu;
                     radioMenuItemCollection;
                     menuItem  -label "normalSelect" -rb on;
@@ -626,13 +629,11 @@ global proc selectHi()
         }
     }
     select $nurbsCurves;
-    //if(`menuItem -q -checkBox SortCheckBox` == 1)
-    //{
-    //    Sortt;
-    //}
+
 }
 //////////////////////////////////////////////////////////////////////
-/////selectHi++
+
+///////////////selectHi++
 //减选所有子级
 global proc dropTail(string $selList[])
 {
@@ -689,31 +690,121 @@ global proc selectHi_upGroup()
         }
     }
     select $selectHi;
+}
+//++
+global proc selectHiPlus()
+{
+    string $selectList[] = `ls -sl`;//输入对象列表
+    selectHi_upGroup();
+    string $selectHi[] = `ls -sl`;//输出父级group对象列表
     selectHi;
-    string $tempSel[] = `ls -sl`;
+    string $tempSel[] = `ls -sl`;//输出对象列表
     if (`menuItem -q -radioButton select_autoAll_CheckBox` == 1)
     {
         if(`size $tempSel` > `size $selectList`)
         {
-            selectHi_upGroup();
+            selectHiPlus();
         }
     }
     if (`menuItem -q -radioButton select_noLimit_CheckBox` == 1)
     {
         if(`size $tempSel` == `size $selectList`)
         {
-            select $selectHi;
-            selectHi_upGroup();
+            select $selectHi;   
+            selectHiPlus();
         }
         if(`size $tempSel` == 0)
         {
             dropTail($selectList);
             selectHi;
-        }   
+        } 
     }
-    
-}
+    string $tempSel2[] = `ls -sl`;
+    select -vis $tempSel2;
 
+}
+////////////////////
+
+///////////////////局部切换选择
+global int $t = 0;
+//获取父级变换
+global proc switchParts_j()
+{
+    string $selList[] = `ls -sl`;//输入选择列表
+    selectHi_upGroup();
+    string $group[] = `ls -sl`;//返回的父级组列表
+    string $group_end[];
+    selectHi();
+    string $selHi[] = `ls -sl`;//输出选择列表
+    if(`size $selHi` > `size $selList`)
+    {
+        //判断返回的父级变换是否为曲线，且有多个子对象
+        string $c[] = `listRelatives -c -f -type "nurbsCurve" $group[0]`;
+        string $n[] = `listRelatives -c -f -type "transform" $group[0]`;
+        if(`size $c` > 0 && `size $n` > 2){select -vis $group;}
+        else
+        {
+            switchParts_j();
+        }
+    }
+    else
+    {
+        select -vis $group;
+    }
+
+}
+// 实现切换   
+global proc switchParts()
+    {
+        switchParts_j();
+        global int $t;
+        string $selAllGroup[];
+        string $group[] = `ls -sl`; //print($group);
+        string $newGroup[] = stringArrayRemoveDuplicates($group);
+        string $g;
+        int $count = 0;
+        for($g in $newGroup)
+        {
+            string $G_children[] = `listRelatives -c -f -type "transform" $g`;
+            string $G_C;
+            string $G_children_remove[];
+            //移除不含曲线的组,隐藏的组
+            for($G_C in $G_children)
+            {
+                string $G_Cc[] = `listRelatives -ad -f -type "nurbsCurve" $G_C`;
+                if(`size $G_Cc` > 0)
+                {
+                    select -vis $G_Cc;   
+                    string $vis[] = `ls -sl`;
+                    if(`size $vis` > 0)
+                    {
+                        $G_children_remove[`size $G_children_remove`] = $G_C;
+                    }
+                }
+            }
+            //
+            $count++;
+            if($count > 1)
+            {
+                $t--;   if($t < 0){$t = 0;}//当有多选对象时，防止$t受循环影响
+            }
+            if($t <= `size $G_children_remove`-1)
+            {
+                $selAllGroup[`size $selAllGroup`] = $G_children_remove[$t]; //print($t);
+                $t++;
+            }
+            else
+            {
+                $t = 0;
+                $selAllGroup[`size $selAllGroup`] = $G_children_remove[$t];
+            }
+        }
+        select $selAllGroup;
+        selectHi();
+        string $tempSel[] = `ls -sl`;
+        select -vis $tempSel;
+    }
+/////////////////////////////////////
 
 /////
 
