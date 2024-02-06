@@ -753,14 +753,28 @@ global proc switchParts_j()
     }
 
 }
-// 实现切换   
+// 实现切换  
+global string $group_cache[]; 
 global proc switchParts()
     {
+        string $inputSel[] = `ls -sl`;
         switchParts_j();
-        global int $t;
+        global int $t;      global string $group_cache[]; 
         string $selAllGroup[];
         string $group[] = `ls -sl`; //print($group);
-        string $newGroup[] = stringArrayRemoveDuplicates($group);
+        string $newGroup[] = stringArrayRemoveDuplicates($group);   dropTail($newGroup);      $newGroup = `ls -sl`;
+        
+        if(`size $group_cache` == 0){$group_cache = $newGroup;}//缓存父级对象
+        if(stringArrayToString($group_cache, "") != stringArrayToString($newGroup, ""))
+        {
+            selectHi();
+            string $newGroup_Hi[] = `ls -sl`;   select -vis $newGroup_Hi;   $newGroup_Hi = `ls -sl`;
+            if (stringArrayToString($inputSel,"") == stringArrayToString($newGroup_Hi,""))
+            {$newGroup = $group_cache;}//getCache
+            else
+            {$group_cache = $newGroup;}//缓存
+        }
+        
         string $g;
         int $count = 0;
         for($g in $newGroup)
@@ -790,13 +804,13 @@ global proc switchParts()
             }
             if($t <= `size $G_children_remove`-1)
             {
-                $selAllGroup[`size $selAllGroup`] = $G_children_remove[$t]; //print($t);
+                $selAllGroup[`size $selAllGroup`] = $G_children_remove[$t];
                 $t++;
             }
             else
             {
                 $t = 0;
-                $selAllGroup[`size $selAllGroup`] = $G_children_remove[$t];
+                $selAllGroup[`size $selAllGroup`] = $G_children_remove[$t];     $t++;
             }
         }
         select $selAllGroup;
