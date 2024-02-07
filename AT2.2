@@ -511,20 +511,27 @@ menu -label "AutoBindJoint" AutoBind;
       menuItem -label "Auto end+" -checkBox on EndCheckBox;
       menuItem -label "AutoJointSize" -checkBox on JointSizeCheckBox;
 
-
+/*
 $object = `button  -p $form2 -command "createEnd(1)" -backgroundColor 0.3 0.3 0.3 -label "End+" -w 39 -h 34`;
                     popupMenu;
                                 menuItem  -label "Clear" -c "CleanUpEnd";
 formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 94 $form2;
+*/
 
-$object = `button -p $form2 -c "switchParts" -backgroundColor 0.3 0.3 0.3 -label "switch" -w 39 -h 34`;
-formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 136 $form2;
+$object = `button  -p $form2 -command "switchInside" -backgroundColor 0.3 0.3 0.3 -label ">+<" -w 39 -h 34`;
+formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 52 $form2;
+
+$object = `button -p $form2 -c "switchParts" -backgroundColor 0.3 0.3 0.3 -label "<+>" -w 39 -h 34`;
+formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 94 $form2;
 
 $object = `button -p $form2 -command "bindControlsAll" -backgroundColor 0.3 0.3 0.3 -label "Bind" -w 39 -h 34`;
+                popupMenu;
+                        menuItem -label "createEnd" -c "createEnd(1)";
+                        menuItem -label "clearEnd" -c "CleanUpEnd";
 formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 10 $form2;
 //
 $object = `button -p $form2 -command "clearBind" -backgroundColor 0.3 0.3 0.3 -label "Bake" -w 39 -h 34`;
-formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 52 $form2;
+formLayout -edit -attachForm $object "top" 0 -attachForm $object "left" 136 $form2;
 //
 $object = `button -p $form2 -command "selectPlus" -backgroundColor 0.3 0.3 0.3 -label "sel+" -w 39 -h 34`;
                     popupMenu;
@@ -819,6 +826,31 @@ global proc switchParts()
         select -vis $tempSel;
     }
 /////////////////////////////////////
+
+//内循环切换
+global string $listInCache[];
+global int $L = 0;
+global proc switchInside()
+{
+    global string $listInCache[];   global int $L;
+    string $selList[] = `ls -sl`;
+    
+    if(`size $selList` > 1){$listInCache = $selList;}//缓存多选择对象
+    else if(`size $selList` == 1)
+    {
+        if(stringArrayContains($selList[0], $listInCache) == 0)
+        {
+           $listInCache = $selList;//缓存单选择对象
+        }
+    }
+    else{clear $listInCache;    return;}//清除缓存
+    
+    //切换选择
+    if($L <= `size $listInCache`-1){select $listInCache[$L];    $L++;}
+    else{$L = 0;    select $listInCache[$L];    $L++;}
+
+}
+//////////////////////////////////////////////////////
 
 /////
 
