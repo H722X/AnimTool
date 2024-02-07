@@ -773,14 +773,17 @@ global proc switchParts()
         
         if(`size $group_cache` == 0){$group_cache = $newGroup;}//缓存父级对象
         if(stringArrayToString($group_cache, "") != stringArrayToString($newGroup, ""))
-        {
-            selectHi();
-            string $newGroup_Hi[] = `ls -sl`;   select -vis $newGroup_Hi;   $newGroup_Hi = `ls -sl`;
-            if (stringArrayToString($inputSel,"") == stringArrayToString($newGroup_Hi,""))
+        {   
+            selectHi_upGroup();     string $backUpGroup[] = `ls -sl`;
+            select $newGroup;   selectHi();     string $newGroup_Hi[] = `ls -sl`;   select -vis $newGroup_Hi;   $newGroup_Hi = `ls -sl`;
+            string $judge1[] = stringArrayRemove($backUpGroup, $group_cache);      string $judge2[] = stringArrayRemove($inputSel, $newGroup_Hi);
+            //if (stringArrayToString($inputSel,"") == stringArrayToString($newGroup_Hi,"") && `size $inputSel` > 0 && stringArrayToString($group_cache,"") == stringArrayToString($backUpGroup,""))
+            if(`size $judge1` == 0 && `size $judge2` == 0 && `size $inputSel` > 0)
             {$newGroup = $group_cache;}//getCache
             else
             {$group_cache = $newGroup;}//缓存
         }
+        //if(`size $inputSel` == 0){clear $group_cache;}//清除缓存
         
         string $g;
         int $count = 0;
