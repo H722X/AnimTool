@@ -1,14 +1,29 @@
 global proc getOffsetAmount (string $textFieldName)
 {
+    global string $gPlayBackSlider;
+    float $tRange[] = `timeControl -ra -q $gPlayBackSlider`;
+    string $tRanges = floatArrayToString($tRange, ":");
     int $value = (`intField -q -v $textFieldName`);
-    keyframe -edit -relative -timeChange ($value);
-    
+    if($tRange[1] - $tRange[0] > 1){
+        keyframe -edit -relative -timeChange ($value) -time $tRanges;
+    }
+    else{
+        keyframe -edit -relative -timeChange ($value);
+    }
 }
 
 global proc getNegOffsetAmount (string $textFieldName)
 {
+    global string $gPlayBackSlider;
+    float $tRange[] = `timeControl -ra -q $gPlayBackSlider`;
+    string $tRanges = floatArrayToString($tRange, ":");
     int $value = ("-" + `intField -q -v $textFieldName`);
-    keyframe -edit -relative -timeChange ($value);
+    if($tRange[1] - $tRange[0] > 1){
+        keyframe -edit -relative -timeChange ($value) -time $tRanges;
+    }
+    else{
+        keyframe -edit -relative -timeChange ($value);
+    }
     
 }
 
