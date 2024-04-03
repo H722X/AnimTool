@@ -621,14 +621,16 @@ global proc bakeCon(){
     string $sel[] = `ls -sl`;
     currentTime -edit $tRange[0];
     if(`size $sel` == 1){
-        bakeResults -simulation true -t $tRanges  -preserveOutsideKeys true $sel[0];
+        if($tRange[1]-$tRange[0]==1){setKeyframe;}
+        else{bakeResults -simulation true -t $tRanges  -preserveOutsideKeys true $sel[0];}
         string $t = `parentConstraint -q $sel[0]`;
         if(`objExists $t`){
         delete $t;
         }
     }
     else{
-        bakeResults -simulation true -t $tRanges  -preserveOutsideKeys true $sel[1];
+        if($tRange[1]-$tRange[0]==1){setKeyframe;}
+        else{bakeResults -simulation true -t $tRanges  -preserveOutsideKeys true $sel[1];}
          string $t = `parentConstraint -q $sel[1]`;
         if(`objExists $t`){
         delete $t;
