@@ -1,3 +1,10 @@
+//***********************************************//
+//                                               //
+//           Animation Tool 2.4                  //
+//          copyright H.2022~2024                //
+//                                               //
+//***********************************************//
+
 global proc getOffsetAmount (string $textFieldName)
 {
     global string $gPlayBackSlider;
@@ -450,7 +457,7 @@ if ( `window -exists mainWindow` )
 }
 
 
-string $window = `window  -title "AnimTool_2.3" 
+string $window = `window  -title "AnimTool_2.4" 
                                  -tlb 1
                                  -s 1
                                  -menuBar true
@@ -589,10 +596,8 @@ window -edit -widthHeight 188.0 318.0 "mainWindow";
 
 //////////////////////////////////////////Follow Start
 global string $gPlayBackSlider;
-global string $Hcons[];
 
 global proc setCon(){ 
-    global string $Hcons[];  
     string $sel[] = `ls -sl`;
     if(`size $sel` == 2){
         string $t = `parentConstraint -q $sel[1]`;
@@ -600,7 +605,7 @@ global proc setCon(){
             warning("already have constrain");
         }
         else{
-            $Hcons = `parentConstraint -mo $sel[0] $sel[1]`;
+            parentConstraint -mo $sel[0] $sel[1];
         }
     }
     else{
@@ -609,7 +614,6 @@ global proc setCon(){
 }
 
 global proc bakeCon(){
-    global string $Hcons[];
     global string $gPlayBackSlider;
     float $tRange[] = `timeControl -ra -q $gPlayBackSlider`;
     string $tRanges = floatArrayToString($tRange, ":");
@@ -618,14 +622,18 @@ global proc bakeCon(){
     currentTime -edit $tRange[0];
     if(`size $sel` == 1){
         bakeResults -simulation true -t $tRanges  -preserveOutsideKeys true $sel[0];
+        string $t = `parentConstraint -q $sel[0]`;
+        if(`objExists $t`){
+        delete $t;
+        }
     }
     else{
         bakeResults -simulation true -t $tRanges  -preserveOutsideKeys true $sel[1];
+         string $t = `parentConstraint -q $sel[1]`;
+        if(`objExists $t`){
+        delete $t;
+        }
     }
-    if(`objExists $Hcons[0]`){
-        delete $Hcons;
-    }
-    clear $Hcons;
 }
 
 global proc follow(){
