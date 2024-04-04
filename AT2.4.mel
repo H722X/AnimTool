@@ -624,7 +624,13 @@ global proc bakeCon(){
     string $tRanges = floatArrayToString($tRange, ":");
     
     string $sel[] = `ls -sl`;
-    string $bakes[] = `ls -sl`; stringArrayRemoveAtIndex(0, $bakes);
+    string $bakes[] = `ls -sl`;
+    //判断是否减选第一个对象
+    string $temp = `parentConstraint -q $bakes[0]`;
+    string $temp1;
+    if(`size $bakes` >= 2){$temp1 = `parentConstraint -q $bakes[1]`;}
+    if(`objExists $temp`){}else if(`objExists $temp1`){stringArrayRemoveAtIndex(0, $bakes);}
+    //
     currentTime -edit $tRange[0];
     if(`size $sel` == 1){
         if($tRange[1]-$tRange[0]==1){setKeyframe;}
