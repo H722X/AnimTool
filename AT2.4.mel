@@ -599,17 +599,22 @@ global string $gPlayBackSlider;
 
 global proc setCon(){ 
     string $sel[] = `ls -sl`;
-    if(`size $sel` == 2){
-        string $t = `parentConstraint -q $sel[1]`;
+    string $cons[] = `ls -sl`; stringArrayRemoveAtIndex(0, $cons);
+    if(`size $sel` >= 2){
+        string $i;
+        for ($i in $cons){
+        string $t = `parentConstraint -q $i`;
         if(`objExists $t`){
-            warning("already have constrain");
+            if(`match "_AT2_4" $t` == "_AT2_4"){continue;}
+            else{error($i + " already have constrain " + $t);}
         }
         else{
-            parentConstraint -mo $sel[0] $sel[1];
+            parentConstraint -mo -n ($i+"_parentConstraint1"+"_AT2_4") $sel[0] $i;
         }
     }
+    }
     else{
-        warning("select two object");
+        warning("select more than two objects");
     }
 }
 
@@ -619,6 +624,7 @@ global proc bakeCon(){
     string $tRanges = floatArrayToString($tRange, ":");
     
     string $sel[] = `ls -sl`;
+    string $bakes[] = `ls -sl`; stringArrayRemoveAtIndex(0, $bakes);
     currentTime -edit $tRange[0];
     if(`size $sel` == 1){
         if($tRange[1]-$tRange[0]==1){setKeyframe;}
@@ -628,12 +634,15 @@ global proc bakeCon(){
         delete $t;
         }
     }
-    else{
-        if($tRange[1]-$tRange[0]==1){setKeyframe;}
-        else{bakeResults -simulation true -t $tRanges  -preserveOutsideKeys true $sel[1];}
-         string $t = `parentConstraint -q $sel[1]`;
+    else if(`size $sel` >= 2){
+        if($tRange[1]-$tRange[0]==1){select $bakes; setKeyframe;}
+        else{bakeResults -simulation true -t $tRanges  -preserveOutsideKeys true $bakes; select $bakes;}
+        string $i;
+        for ($i in $bakes){
+         string $t = `parentConstraint -q $i`;
         if(`objExists $t`){
         delete $t;
+        }
         }
     }
 }
