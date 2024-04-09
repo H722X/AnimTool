@@ -524,6 +524,9 @@ $object = `button -command "follow()" -backgroundColor 0.157 0.404 0.573 -label 
                 popupMenu;
                     menuItem -label "set" -c "setCon()";
                     menuItem -label "bake" -c "bakeCon()";
+                    menuItem -label "smartBake" -c "smartBake()";
+                    menuItem -label "createSmartLocator" -c "createSmartLocator()";
+                    menuItem -label "pasteToSmartLocator" -c "pasteToSmartLocator()";
 formLayout -edit -attachForm $object "top" 168 -attachForm $object "left" 10 $form;
   
 //$object = `separator -w 122 -h 8`;
@@ -639,6 +642,12 @@ global proc bakeCon(){
         if(`objExists $t`){
         delete $t;
         }
+        if(`objExists ($sel[0]+"_parentConstraint1")`){
+        delete ($sel[0]+"_parentConstraint1");
+        }
+        if(`objExists ($sel[0]+"_parentConstraint1_AT2_4")`){
+        delete ($sel[0]+"_parentConstraint1_AT2_4");
+        }
     }
     else if(`size $sel` >= 2){
         if($tRange[1]-$tRange[0]==1){select $bakes; setKeyframe;}
@@ -649,9 +658,59 @@ global proc bakeCon(){
         if(`objExists $t`){
         delete $t;
         }
+        if(`objExists ($i+"_parentConstraint1")`){
+        delete ($i+"_parentConstraint1");
+        }
+        if(`objExists ($i+"_parentConstraint1_AT2_4")`){
+        delete ($i+"_parentConstraint1_AT2_4");
+        }
         }
     }
 }
+
+global proc smartBake(){
+    global string $gPlayBackSlider;
+    float $tRange[] = `timeControl -ra -q $gPlayBackSlider`;
+    
+    string $sel[] = `ls -sl`;
+    string $s;
+    string $sel_con[] = `ls -sl`;
+    for($s in $sel){
+        string $parentCon[] = `parentConstraint -q -tl $s`;
+        $sel_con = stringArrayCatenate($sel_con, $parentCon);
+    }
+
+    float $keys[] = `keyframe -q -tc $sel_con`;
+    float $i;
+    float $allKey[];
+    for($i in $keys){
+        if(floatArrayContains($i, $allKey)){}else{
+            if($tRange[1] - $tRange[0] > 1){
+                if($i >= $tRange[0] && $i <= $tRange[1]){
+                    floatArrayInsertAtIndex(10000, $allKey, $i);
+                }
+            }
+            else{
+                floatArrayInsertAtIndex(10000, $allKey, $i);
+            }
+        }
+    }
+    
+    float $ii;
+    for ($ii in $allKey){
+            currentTime $ii;setKeyframe $sel;
+            setKeyframe -t $ii -v 1 -at "blendParent1" $sel;
+    }
+
+    string $con;
+    for ($con in $sel){
+        string $t = `parentConstraint -q $con`;
+        if(`objExists $t`){
+            delete $t;
+        }
+    }
+}
+
 
 global proc follow(){
     global string $gPlayBackSlider;
@@ -659,6 +718,37 @@ global proc follow(){
     currentTime -edit $tRange[0];
     setCon();
     bakeCon();
+}
+
+
+global proc createSmartLocator(){ 
+    string $sel[] =`ls -sl`;
+    if(`size $sel` > 0){
+        string $i;
+        for($i in $sel){
+            float $Box[] = `xform -q -bb $i`;//得到边界框数值
+            float $len = `mag(<<round($Box[3]),round($Box[4]),round($Box[5])>> - <<round($Box[0]),round($Box[1]),round($Box[2])>>)`;
+            float $L = sqrt($len*$len/2);
+            if(`objExists ("locator_"+$i+"_AT2")`){delete ("locator_"+$i+"_AT2");}
+            spaceLocator -n ("locator_"+$i+"_AT2");     
+            setAttr ("locator_"+$i+"_AT2Shape.localScaleX") $L;setAttr ("locator_"+$i+"_AT2Shape.localScaleY") $L;setAttr ("locator_"+$i+"_AT2Shape.localScaleZ") $L;
+            parentConstraint $i ("locator_"+$i+"_AT2");
+            select ("locator_"+$i+"_AT2");
+            smartBake();
+        }
+    }
+}
+
+global proc pasteToSmartLocator(){
+    string $sel[] = `ls -sl`;
+    string $i;
+    for($i in $sel){
+        if(`objExists ("locator_"+$i+"_AT2")`){
+            parentConstraint ("locator_"+$i+"_AT2") $i;
+            select $i;
+            smartBake();
+        }
+    }
 }
 
 //////////////////////////////////////////Follow End
