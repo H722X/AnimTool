@@ -727,7 +727,7 @@ global proc createSmartLocator(){
         string $i;
         for($i in $sel){
             float $Box[] = `xform -q -bb $i`;//得到边界框数值
-            float $len = `mag(<<round($Box[3]),round($Box[4]),round($Box[5])>> - <<round($Box[0]),round($Box[1]),round($Box[2])>>)`;
+            float $len = `mag(<<($Box[3]-0.108),($Box[4]-0.108),($Box[5]-0.108)>> - <<($Box[0]+0.108),($Box[1]+0.108),($Box[2]+0.108)>>)`;
             float $L = sqrt($len*$len/2);
             if(`objExists ("locator_"+$i+"_AT2")`){delete ("locator_"+$i+"_AT2");}
             spaceLocator -n ("locator_"+$i+"_AT2");     
